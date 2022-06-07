@@ -1,4 +1,4 @@
-import { shell } from "./shell";
+import { Shell } from "./shell";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
@@ -13,12 +13,14 @@ const io = new Server(httpServer, {
 });
 io.on("connect", (socket) => {
     console.log('connect');
+    const shell = new Shell();
+    shell.onData((data) => {
+        socket.emit('shell', data);
+    })
     socket.on('shell', (data) => {
         shell.write(data);
     })
-    shell.onData((data) => {  
-        socket.emit('shell', data);
-    })
+
 });
 
 io.listen(3000);

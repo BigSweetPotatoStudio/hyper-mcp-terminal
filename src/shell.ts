@@ -1,35 +1,43 @@
 
-import { ChildProcessWithoutNullStreams, spawn } from "child_process";
+// import { ChildProcessWithoutNullStreams, spawn } from "child_process";
 import { config } from "./config";
+import * as pty from 'node-pty'
+var os = require('os');
+
+const env = Object.assign({}, process.env);
+const USE_BINARY = os.platform() !== "win32";
 
 
-
-class Shell {
-    shell_child_process = spawn(config.path, []);
+export class Shell {
+    start
+    term = pty.spawn(process.platform === 'win32' ? 'cmd.exe' : 'bash', [], {
+        name: 'xterm-256color',
+        cols: 80,
+        rows: 24,
+        cwd: process.platform === 'win32' ? undefined : env.PWD,
+        env: env,
+        encoding: USE_BINARY ? null : 'utf8'
+    });;
     constructor() {
-        // this.shell_child_process.stdin.write("ls -l\n");
-        // this.shell_child_process.stdin.write("ls\n");
-        // this.shell_child_process.stdout.on('data', (data) => {
+
+        // this.term.stdin.write("ls -l\n");
+        // this.term.stdin.write("ls\n");
+        // this.term.stdout.on('data', (data) => {
         //     console.log(`stdout: ${data}`);
         // });
     }
     write(data) {
         console.log('write: ', data);
-        this.shell_child_process.stdin.write(data);
+        this.term.write(data);
     }
     onData(cb) {
-        this.shell_child_process.stdout.on('data', (data) => {
+        this.term.on('data', (data) => {
             console.log('shell out:\n', data.toString());
-            cb(data);
-        });
-       
-        this.shell_child_process.stderr.on('data', (data) => {
-            console.log('shell err:\n', data.toString());
             cb(data);
         });
     }
 }
-export const shell = new Shell();
+
 
 
 

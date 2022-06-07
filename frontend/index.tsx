@@ -28,11 +28,14 @@ const App = () => {
 
         var term = new Terminal();
         term.open(document.getElementById('terminal'));
-
+        term.onData(function(data){
+            socket.emit("shell", data);
+        })
+        // term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         socket.on("shell", (data) => {
             console.log(new TextDecoder('utf-8').decode(data));
             // result += data + '\n';
-            setResult(new TextDecoder('utf-8').decode(data))
+            // setResult(new TextDecoder('utf-8').decode(data))
             term.write(new Uint8Array(data))
         });
     }, [])
@@ -41,9 +44,7 @@ const App = () => {
             <div id="terminal">
 
             </div>
-            <pre >
-                {result}
-            </pre>
+
             <TextArea value={inputText} onChange={(e) => {
                 setInputText(e.target.value);
             }}></TextArea>
