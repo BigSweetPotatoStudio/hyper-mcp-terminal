@@ -1,9 +1,17 @@
 import { Shell } from "./shell";
+import koa from 'koa';
 import { createServer } from "http";
 import { Server } from "socket.io";
+const serve = require('koa-static');
+const app = new koa();
 
 
-const httpServer = createServer();
+// app.use(ctx => {
+//     ctx.body = 'Hello Koa';
+// });
+app.use(serve('./build'));
+
+const httpServer = createServer(app.callback());
 const io = new Server(httpServer, {
     path: '/bash/',
     cors: {
@@ -23,4 +31,4 @@ io.on("connect", (socket) => {
 
 });
 
-io.listen(3000);
+httpServer.listen(3000);

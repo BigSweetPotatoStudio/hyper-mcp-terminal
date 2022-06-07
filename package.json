@@ -8,10 +8,11 @@
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec ts-node src/server.ts",
     "server": "webpack serve",
-    "start": "npm run build && electron .",
+    "start:el": "npm run build && electron .",
     "build": "npx tsc -p tsconfig.node.json",
     "build:web": "npx webpack",
-    "watch:web": "npx webpack -w"
+    "watch:web": "npx webpack -w",
+    "start": "pm2 start dist/server.js --name terminal"
   },
   "devDependencies": {
     "css-loader": "^6.7.1",
@@ -21,7 +22,9 @@
   "dependencies": {
     "@types/node": "^17.0.40",
     "antd": "^4.21.0",
+    "koa": "^2.13.4",
     "moment": "^2.29.3",
+    "node-pty": "^0.10.1",
     "nodemon": "^2.0.16",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
