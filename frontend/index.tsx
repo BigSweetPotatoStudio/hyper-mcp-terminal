@@ -9,12 +9,17 @@ import 'antd/dist/antd.css';
 import 'xterm/css/xterm.css'
 import './index.css';
 import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
 import { io } from "socket.io-client";
+import querystring from 'querystring-es3'
 const TextArea = Input.TextArea;
 
 moment.locale('zh-cn');
-const socket = io("http://localhost:3000", {
-    path: "/bash/"
+const socket = io(document.location.origin, {
+    path: "/bash/",
+    auth: {
+        passwd: (querystring.parse(window.location.search.slice(1)).passwd || '')
+    }
 });
 socket.on("connect", function () {
     console.log("connected");
@@ -25,18 +30,26 @@ const App = () => {
     let [result, setResult] = useState('');
     const [inputText, setInputText] = useState('ls');
     useEffect(function () {
-
+        let dom = document.getElementById('terminal')
         var term = new Terminal();
-        term.open(document.getElementById('terminal'));
-        term.onData(function(data){
+        term.open(dom);
+        dom.style.width = window.innerWidth + "px";
+        dom.style.height = window.innerHeight + "px";
+        const fitAddon = new FitAddon();
+        term.loadAddon(fitAddon);
+        fitAddon.fit();
+        term.onData(function (data) {
             socket.emit("shell", data);
         })
         // term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         socket.on("shell", (data) => {
-            console.log(new TextDecoder('utf-8').decode(data));
+            // console.log(new TextDecoder('utf-8').decode(data));
             // result += data + '\n';
             // setResult(new TextDecoder('utf-8').decode(data))
             term.write(new Uint8Array(data))
+        });
+        socket.on('disconnect', function () {
+            console.log('user disconnected');
         });
     }, [])
     return (
@@ -45,12 +58,12 @@ const App = () => {
 
             </div>
 
-            <TextArea value={inputText} onChange={(e) => {
+            {/* <TextArea value={inputText} onChange={(e) => {
                 setInputText(e.target.value);
             }}></TextArea>
             <button onClick={() => {
                 socket.emit("shell", inputText + '\n');
-            }}>submit</button>
+            }}>submit</button> */}
         </ConfigProvider>
     );
 };

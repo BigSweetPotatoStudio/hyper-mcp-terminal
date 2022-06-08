@@ -36,6 +36,9 @@ export class Shell {
             cb(data);
         });
     }
+    kill(){
+        this.term.kill()
+    }
 }
 
 
