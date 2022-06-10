@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button, ConfigProvider, DatePicker, message, Input } from 'antd';
+import { Button, ConfigProvider, DatePicker, message, Input, Divider, List, Typography } from 'antd';
 // 由于 antd 组件的默认文案是英文，所以需要修改为中文
 import zhCN from 'antd/lib/locale/zh_CN';
 import moment from 'moment';
@@ -13,6 +13,9 @@ import { FitAddon } from 'xterm-addon-fit';
 import { io } from "socket.io-client";
 import querystring from 'querystring-es3'
 const TextArea = Input.TextArea;
+const Item = List.Item;
+import { PlusSquareOutlined } from '@ant-design/icons';
+
 
 moment.locale('zh-cn');
 const socket = io(document.location.origin, {
@@ -26,6 +29,11 @@ socket.on("connect", function () {
     // socket.emit("shell", 'ls\n');
     // socket.emit("shell", 'ls -l\n');
 })
+const cmds = [{
+    label: 'ls -l',
+    value: 'ls -l\n'
+}]
+const { Search } = Input;
 const App = () => {
     let [result, setResult] = useState('');
     const [inputText, setInputText] = useState('ls');
@@ -33,11 +41,14 @@ const App = () => {
         let dom = document.getElementById('terminal')
         var term = new Terminal();
         term.open(dom);
-        dom.style.width = window.innerWidth + "px";
-        dom.style.height = window.innerHeight + "px";
+        // dom.style.width = window.innerWidth + "px";
+        // dom.style.height = window.innerHeight + "px";
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
         fitAddon.fit();
+        window.onresize = () => {
+            fitAddon.fit();
+        }
         term.onData(function (data) {
             socket.emit("shell", data);
         })
@@ -54,10 +65,30 @@ const App = () => {
     }, [])
     return (
         <ConfigProvider locale={zhCN}>
-            <div id="terminal">
+            <div className="container">
+                <div id="terminal">
+
+                </div>
+                <div id="cmds">
+                    <List
+                        className='list'
+                        size="small"
+                        bordered
+                        dataSource={cmds}
+                        renderItem={item => <Item >
+                            <Button onClick={() => {
+                                socket.emit("shell", item.value);
+                            }} type="dashed" block>
+                                {item.label}
+                            </Button>
+                        </Item>}
+                    />
+                    <div>
+                        <Input addonAfter={<PlusSquareOutlined />} defaultValue="mysite" />
+                    </div>
+                </div>
 
             </div>
-
             {/* <TextArea value={inputText} onChange={(e) => {
                 setInputText(e.target.value);
             }}></TextArea>

@@ -1,0 +1,17 @@
+#root {
+    height: calc(100%);
+}
+
+.container {
+    display: flex;
+    height: calc(100%);
+}
+
+#terminal {
+    flex-grow: 1;
+    /* width: 70%; */
+}
+
+#cmds {
+    width: 350px;
+}
