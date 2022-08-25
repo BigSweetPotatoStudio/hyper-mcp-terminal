@@ -2,7 +2,7 @@
     "compilerOptions": {
         "allowJs": true,
         "checkJs": false,
-        "composite": true,
+        "composite": false,
         "esModuleInterop": true,
         "jsx": "react",
         "module": "ES6",
@@ -20,7 +20,7 @@
         "target": "ES2021",
         "typeRoots": [
             "./node_modules/@types"
-        ]
+        ],
     },
     "include": [
         "src",

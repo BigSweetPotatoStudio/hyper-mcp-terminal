@@ -30,30 +30,7 @@ socket.on("connect", function () {
     // socket.emit("shell", 'ls -l\n');
 })
 const cmds = [
-    {
-        label: 'ls -l',
-        value: 'ls -l\n'
-    },
-    {
-        label: 'ssh zhangyichao1',
-        value: async function (send, expect) {
-            send('ssh zhangyichao1@10.170.44.21\n');
-            await expect('password:')
-            send('zhangyichao1\n');
-        }
-    },
-    {
-        label: 'ssh 11.44.134.203',
-        value: async function (send, expect) {
-            send('ssh zhangyichao1@10.170.44.21\n');
-            await expect('password:')
-            send('zhangyichao1\n');
-            await expect('zhangyichao1@centos')
-            send('ssh root@11.44.134.203\n');
-            await expect('password:')
-            send('OCZv2H0HQUO2YluN\n');
-        }
-    }
+
 ]
 const { Search } = Input;
 

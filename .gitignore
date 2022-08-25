@@ -1,4 +1,4 @@
-dist/**/*.js
-dist/**/*.js.map
-dist/**/*.d.ts
+dist/
 node_modules/
+lib/
+build/
