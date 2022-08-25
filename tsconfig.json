@@ -2,19 +2,28 @@
     "compilerOptions": {
         "allowJs": true,
         "checkJs": false,
-        // "composite": true,
+        "composite": true,
         "esModuleInterop": true,
         "jsx": "react",
-        "module": "commonjs",
+        "module": "ES6",
         "moduleResolution": "node",
-        "preserveConstEnums": true,
         "removeComments": false,
         "resolveJsonModule": true,
         "sourceMap": true,
         "strict": false,
+        "strictNullChecks": false,
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "types": ["node"],
         "target": "ES2021",
         "typeRoots": [
             "./node_modules/@types"
         ]
     },
+    "include": [
+        "src",
+        "frontend"
+    ]
 }

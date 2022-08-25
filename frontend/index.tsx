@@ -29,16 +29,73 @@ socket.on("connect", function () {
     // socket.emit("shell", 'ls\n');
     // socket.emit("shell", 'ls -l\n');
 })
-const cmds = [{
-    label: 'ls -l',
-    value: 'ls -l\n'
-}]
+const cmds = [
+    {
+        label: 'ls -l',
+        value: 'ls -l\n'
+    },
+    {
+        label: 'ssh zhangyichao1',
+        value: async function (send, expect) {
+            send('ssh zhangyichao1@10.170.44.21\n');
+            await expect('password:')
+            send('zhangyichao1\n');
+        }
+    },
+    {
+        label: 'ssh 11.44.134.203',
+        value: async function (send, expect) {
+            send('ssh zhangyichao1@10.170.44.21\n');
+            await expect('password:')
+            send('zhangyichao1\n');
+            await expect('zhangyichao1@centos')
+            send('ssh root@11.44.134.203\n');
+            await expect('password:')
+            send('OCZv2H0HQUO2YluN\n');
+        }
+    }
+]
 const { Search } = Input;
+
+function concatenate(...arrays) {
+
+    let totalLen = 0;
+
+    for (let arr of arrays)
+
+        totalLen += arr.byteLength;
+
+    let res = new Uint8Array(totalLen)
+
+    let offset = 0
+
+    for (let arr of arrays) {
+
+        let uint8Arr = new Uint8Array(arr)
+
+        res.set(uint8Arr, offset)
+
+        offset += arr.byteLength
+
+    }
+
+    return res.buffer
+
+}
+
+
+let ResulData = new ArrayBuffer(0);
+// function check() {
+//     console.log(ResulData);
+//     console.log(new TextDecoder('utf-8').decode(ResulData));
+//     setTimeout(check, 200);
+// }
+// check();
 const App = () => {
     let [result, setResult] = useState('');
     const [inputText, setInputText] = useState('ls');
     useEffect(function () {
-        let dom = document.getElementById('terminal')
+        let dom = document.getElementById('terminal')!
         var term = new Terminal();
         term.open(dom);
         // dom.style.width = window.innerWidth + "px";
@@ -49,14 +106,18 @@ const App = () => {
         window.onresize = () => {
             fitAddon.fit();
         }
+
         term.onData(function (data) {
+            ResulData = new ArrayBuffer(0);
             socket.emit("shell", data);
         })
         // term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
         socket.on("shell", (data) => {
+            // console.log(data);
             // console.log(new TextDecoder('utf-8').decode(data));
             // result += data + '\n';
             // setResult(new TextDecoder('utf-8').decode(data))
+            ResulData = concatenate(ResulData, data);
             term.write(new Uint8Array(data))
         });
         socket.on('disconnect', function () {
@@ -75,17 +136,55 @@ const App = () => {
                         size="small"
                         bordered
                         dataSource={cmds}
-                        renderItem={item => <Item >
+                        renderItem={item => <Item>
                             <Button onClick={() => {
-                                socket.emit("shell", item.value);
+                                if (typeof item.value === 'string') {
+                                    ResulData = new ArrayBuffer(0);
+                                    socket.emit("shell", item.value);
+                                } else if (typeof item.value === 'function') {
+                                    item.value(function (cmd) {
+                                        socket.emit("shell", cmd);
+                                        ResulData = new ArrayBuffer(0);
+                                    }, function (reg, timer = 5000) {
+                                        return new Promise((resolve, reject) => {
+                                            let t: any;
+                                            let timeout = false;
+                                            let t2 = setTimeout(() => {
+                                                timeout = true;
+                                                console.log('超时');
+                                            }, timer)
+                                            function check() {
+                                                if (timeout) {
+                                                    message.error('超时');
+                                                    reject(new Error('超时'))
+                                                    return;
+                                                }
+                                                // console.log(ResulData);
+                                                let text = new TextDecoder('utf-8').decode(ResulData);
+                                                // console.log(text);
+
+                                                if (text.match(reg)) {
+                                                    resolve(1);
+                                                    clearTimeout(t2);
+                                                    clearTimeout(t);
+                                                    return;
+                                                } else {
+                                                    t = setTimeout(check, 200);
+                                                }
+                                            }
+                                            check();
+                                        })
+                                    });
+                                }
+
                             }} type="dashed" block>
                                 {item.label}
                             </Button>
                         </Item>}
                     />
-                    <div>
+                    {/* <div>
                         <Input addonAfter={<PlusSquareOutlined />} defaultValue="mysite" />
-                    </div>
+                    </div> */}
                 </div>
 
             </div>
@@ -95,7 +194,7 @@ const App = () => {
             <button onClick={() => {
                 socket.emit("shell", inputText + '\n');
             }}>submit</button> */}
-        </ConfigProvider>
+        </ConfigProvider >
     );
 };
 

@@ -8,11 +8,9 @@
   "bin": "cli.js",
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec ts-node src/server.ts",
-    "server": "webpack serve",
-    "start:el": "npm run build && electron .",
     "build": "npx tsc -p tsconfig.node.json",
     "build:web": "npx webpack",
-    "watch:web": "npx webpack -w",
+    "dev:web": "npx webpack -w",
     "start": "pm2 start dist/server.js --name terminal",
     "restart": "pm2 stop terminal && npm start"
   },
