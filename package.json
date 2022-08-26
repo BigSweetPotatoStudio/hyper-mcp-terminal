@@ -13,7 +13,7 @@
     "build": "npx tsc -p tsconfig.node.json",
     "build:web": "npx webpack",
     "dev:web": "npx webpack -w",
-    "start": "pm2 start dist/server.js --name terminal",
+    "start": "pm2 start lib/server.js --name terminal",
     "restart": "pm2 stop terminal && npm start",
     "prepublish": "npm run build:web && npm run build"
   },

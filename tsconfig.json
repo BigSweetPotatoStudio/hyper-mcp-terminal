@@ -5,8 +5,8 @@
         "composite": false,
         "esModuleInterop": true,
         "jsx": "react",
-        "module": "ES6",
-        "moduleResolution": "node",
+        "module": "CommonJS",
+        "moduleResolution": "Node",
         "removeComments": false,
         "resolveJsonModule": true,
         "sourceMap": true,
@@ -17,7 +17,7 @@
             "DOM"
         ],
         "types": ["node"],
-        "target": "ES2021",
+        "target": "ES2015",
         "typeRoots": [
             "./node_modules/@types"
         ],
