@@ -5,7 +5,7 @@
         "composite": false,
         "esModuleInterop": true,
         "jsx": "react",
-        "module": "CommonJS",
+        "module": "ES2015",
         "moduleResolution": "node",
         "removeComments": false,
         "resolveJsonModule": true,

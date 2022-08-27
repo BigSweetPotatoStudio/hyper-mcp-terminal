@@ -100,7 +100,7 @@ const App = () => {
 
                 </div>
                 <div id="cmds">
-                    <List
+                    <List<any>
                         className='list'
                         size="small"
                         bordered
