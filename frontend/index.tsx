@@ -29,9 +29,7 @@ socket.on("connect", function () {
     // socket.emit("shell", 'ls\n');
     // socket.emit("shell", 'ls -l\n');
 })
-const cmds = [
 
-]
 const { Search } = Input;
 
 function concatenate(...arrays) {
@@ -59,24 +57,21 @@ function concatenate(...arrays) {
     return res.buffer
 
 }
+const origin_cmds = [
 
+]
 
 let ResulData = new ArrayBuffer(0);
-// function check() {
-//     console.log(ResulData);
-//     console.log(new TextDecoder('utf-8').decode(ResulData));
-//     setTimeout(check, 200);
-// }
-// check();
+
 const App = () => {
     let [result, setResult] = useState('');
-    const [inputText, setInputText] = useState('ls');
+    let [cmds, setCmds] = useState(origin_cmds);
+    const [inputText, setInputText] = useState('');
     useEffect(function () {
         let dom = document.getElementById('terminal')!
         var term = new Terminal();
         term.open(dom);
-        // dom.style.width = window.innerWidth + "px";
-        // dom.style.height = window.innerHeight + "px";
+
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
         fitAddon.fit();
@@ -88,12 +83,9 @@ const App = () => {
             ResulData = new ArrayBuffer(0);
             socket.emit("shell", data);
         })
-        // term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
+
         socket.on("shell", (data) => {
-            // console.log(data);
-            // console.log(new TextDecoder('utf-8').decode(data));
-            // result += data + '\n';
-            // setResult(new TextDecoder('utf-8').decode(data))
+
             ResulData = concatenate(ResulData, data);
             term.write(new Uint8Array(data))
         });
@@ -159,18 +151,25 @@ const App = () => {
                             </Button>
                         </Item>}
                     />
-                    {/* <div>
-                        <Input addonAfter={<PlusSquareOutlined />} defaultValue="mysite" />
-                    </div> */}
+                    <TextArea value={inputText} onChange={(e) => {
+                        setInputText(e.target.value);
+                    }}></TextArea>
+                    <Button style={{ width: '100%' }} onClick={() => {
+                        let cmd = inputText + '\n';
+                        socket.emit("shell", cmd);
+                        if (inputText.trim() == '') {
+                            return;
+                        }
+                        cmds.push({
+                            label: cmd,
+                            value: cmd,
+                        })
+                        setCmds(cmds.concat([]))
+                    }}>submit</Button>
                 </div>
 
             </div>
-            {/* <TextArea value={inputText} onChange={(e) => {
-                setInputText(e.target.value);
-            }}></TextArea>
-            <button onClick={() => {
-                socket.emit("shell", inputText + '\n');
-            }}>submit</button> */}
+
         </ConfigProvider >
     );
 };

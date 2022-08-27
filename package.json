@@ -1,6 +1,6 @@
 {
   "name": "dadigua-web-terminal-cli",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Hello World!",
   "main": "main.js",
   "author": "Jane Doe",
@@ -11,32 +11,34 @@
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec ts-node src/server.ts",
     "build": "npx tsc -p tsconfig.node.json",
-    "build:web": "npx webpack",
+    "build:web": "npx webpack --mode production",
     "dev:web": "npx webpack -w",
     "start": "pm2 start lib/server.js --name terminal",
     "restart": "pm2 stop terminal && npm start",
-    "prepublish": "npm run build:web && npm run build"
+    "prepublishOnly": "npm run build:web && npm run build"
   },
   "devDependencies": {
-    "css-loader": "^6.7.1",
-    "typescript": "^4.7.3",
     "@ant-design/icons": "^4.7.0",
+    "@types/node": "^17.0.40",
+    "antd": "^4.22.8",
+    "css-loader": "^6.7.1",
     "moment": "^2.29.3",
     "querystring-es3": "^0.2.1",
     "react": "^18.1.0",
+    "react-dom": "^18.1.0",
     "style-loader": "^3.3.1",
     "ts-loader": "^9.3.0",
     "ts-node": "^10.8.1",
+    "typescript": "^4.7.3",
     "webpack": "^5.73.0",
     "webpack-cli": "^4.9.2",
-    "webpack-dev-server": "^4.9.1",
-    "react-dom": "^18.1.0",
-    "@types/node": "^17.0.40",
-    "antd": "4.0"
+    "webpack-dev-server": "^4.9.1"
   },
   "dependencies": {
+    "@types/koa": "^2.13.5",
     "commander": "^9.3.0",
     "koa": "^2.13.4",
+    "koa-basic-auth": "^4.0.0",
     "koa-static": "^5.0.0",
     "node-pty": "^0.10.1",
     "nodemon": "^2.0.16",

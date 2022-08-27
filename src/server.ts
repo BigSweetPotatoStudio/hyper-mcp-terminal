@@ -1,17 +1,45 @@
 import { Shell } from "./shell";
 import koa from 'koa';
+import path from 'path';
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { options } from "./commander";
 const serve = require('koa-static');
 const app = new koa();
+const auth = require('koa-basic-auth');
+
+
 console.log(options);
 
 
-// app.use(ctx => {
-//     ctx.body = 'Hello Koa';
-// });
-app.use(serve('./build'));
+// console.log(path.resolve(__dirname, '../build'));
+
+// custom 401 handling
+app.use(async (ctx, next) => {
+    console.log(ctx);
+
+    try {
+        await next();
+        if (ctx.request.url == '/' && ctx.response.status == 200) {
+            // ctx.response.append('Set-Cookie', 'token=bar; Path=/; HttpOnly');
+            console.log("success");
+            ctx.redirect('?passwd=' + options.passwd)
+        }
+    } catch (err) {
+        if (401 == err.status) {
+            ctx.status = 401;
+            ctx.set('WWW-Authenticate', 'Basic');
+            ctx.body = 'cant haz that';
+        } else {
+            throw err;
+        }
+    }
+});
+
+// require auth
+app.use(auth({ name: options.username, pass: options.passwd }));
+
+app.use(serve(path.resolve(__dirname, '../build')));
 
 const httpServer = createServer(app.callback());
 const io = new Server(httpServer, {
