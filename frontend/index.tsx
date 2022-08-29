@@ -10,6 +10,8 @@ import 'xterm/css/xterm.css'
 import './index.css';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+
 import { io } from "socket.io-client";
 import querystring from 'querystring-es3'
 const TextArea = Input.TextArea;
@@ -63,6 +65,40 @@ const origin_cmds = [
 
 let ResulData = new ArrayBuffer(0);
 
+function _translateBufferLineToStringWithWrap(lineIndex: number, trimRight: boolean, terminal: Terminal): [string, number] {
+    let lineString = '';
+    let lineWrapsToNext: boolean;
+    let prevLinesToWrap: boolean;
+
+    do {
+        const line = terminal.buffer.active.getLine(lineIndex);
+        if (!line) {
+            break;
+        }
+
+        if (line.isWrapped) {
+            lineIndex--;
+        }
+
+        prevLinesToWrap = line.isWrapped;
+    } while (prevLinesToWrap);
+
+    const startLineIndex = lineIndex;
+
+    do {
+        const nextLine = terminal.buffer.active.getLine(lineIndex + 1);
+        lineWrapsToNext = nextLine ? nextLine.isWrapped : false;
+        const line = terminal.buffer.active.getLine(lineIndex);
+        if (!line) {
+            break;
+        }
+        lineString += line.translateToString(!lineWrapsToNext && trimRight).substring(0, terminal.cols);
+        lineIndex++;
+    } while (lineWrapsToNext);
+
+    return [lineString, startLineIndex];
+}
+
 const App = () => {
     let [result, setResult] = useState('');
     let [cmds, setCmds] = useState(origin_cmds);
@@ -74,10 +110,17 @@ const App = () => {
 
         const fitAddon = new FitAddon();
         term.loadAddon(fitAddon);
+        term.loadAddon(new WebLinksAddon((e, url) => {
+            console.log(e, url);
+        }));
         fitAddon.fit();
         window.onresize = () => {
             fitAddon.fit();
         }
+
+        // setInterval(() => {
+        //     console.log(_translateBufferLineToStringWithWrap(-1, false,term));
+        // }, 10000)
 
         term.onData(function (data) {
             ResulData = new ArrayBuffer(0);

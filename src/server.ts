@@ -16,7 +16,7 @@ console.log(options);
 
 // custom 401 handling
 app.use(async (ctx, next) => {
-    console.log(ctx);
+    // console.log(ctx);
 
     try {
         await next();
