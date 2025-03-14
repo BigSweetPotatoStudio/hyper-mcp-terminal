@@ -1,8 +1,7 @@
-const { Command } = require('commander');
+import { Command } from 'commander';
 const program = new Command();
 const env = Object.assign({}, process.env);
 program
-    .option('--username <type>', 'username', 'admin')
     .option('--passwd <type>', 'password', 'admin')
     .option('--cwd <type>', 'cwd', env.PWD)
     .option('-p, --port <type>', 'port', '3000');

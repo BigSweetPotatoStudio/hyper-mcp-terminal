@@ -5,7 +5,7 @@
         "composite": false,
         "esModuleInterop": true,
         "jsx": "react",
-        "module": "CommonJS",
+        "module": "esnext",
         "moduleResolution": "node",
         "removeComments": false,
         "resolveJsonModule": true,
@@ -16,14 +16,17 @@
             "ESNext",
             "DOM"
         ],
-        "types": ["node"],
-        "target": "ES2015",
+        "types": [
+            "node"
+        ],
+        "target": "ESNext",
         "typeRoots": [
             "./node_modules/@types"
         ],
     },
     "include": [
         "src",
-        "frontend"
+        "frontend",
+        "tests/test.ts"
     ]
 }
