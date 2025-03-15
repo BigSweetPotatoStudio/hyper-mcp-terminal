@@ -11,12 +11,12 @@
   },
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec tsx src/server.ts",
-    "build": "npx tsc -p tsconfig.node.json",
+    "build": "npx tsc",
     "build:web": "npx webpack --mode production",
     "dev:web": "npx webpack -w",
     "start": "pm2 start lib/server.js --name terminal",
     "restart": "pm2 stop terminal && npm start",
-    "prepublishOnly": "npm run build:web && npm run build"
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@ant-design/icons": "^4.7.0",
