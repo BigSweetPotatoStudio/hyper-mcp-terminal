@@ -3,7 +3,7 @@
         "allowJs": true,
         "checkJs": false,
         "composite": false,
-        "skipLibCheck": false,
+        "skipLibCheck": true,
         "esModuleInterop": true,
         "jsx": "react",
         "module": "esnext",
