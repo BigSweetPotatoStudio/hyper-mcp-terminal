@@ -6,6 +6,10 @@
   "type": "module",
   "author": "Jane Doe",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BigSweetPotatoStudio/hyper-mcp-terminal"
+  },
   "bin": {
     "hyper-mcp-terminal": "dist/index.mjs"
   },
