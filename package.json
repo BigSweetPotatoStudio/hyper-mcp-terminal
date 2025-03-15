@@ -1,13 +1,13 @@
 {
   "name": "hyper-mcp-terminal",
-  "version": "1.0.7",
+  "version": "1.0.0",
   "description": "Hello World!",
   "main": "main.js",
   "type": "module",
   "author": "Jane Doe",
   "license": "MIT",
   "bin": {
-    "web-terminal": "cli.js"
+    "hyper-mcp-terminal": "dist/index.js"
   },
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec tsx src/server.ts",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@ant-design/icons": "^4.7.0",
-    "@types/node": "^17.0.40",
+    "@types/node": "^22.13.10",
     "@types/react": "^18.0.17",
     "antd": "^4.22.8",
     "css-loader": "^6.7.1",

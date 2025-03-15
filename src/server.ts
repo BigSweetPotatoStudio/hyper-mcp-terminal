@@ -78,10 +78,11 @@ io.on("connect", (socket) => {
   console.log("connected");
   const shell = new Shell();
   shell.onData((data) => {
-    logger.info(data);
+    // logger.info(data);
     socket.emit("shell", data);
   });
   socket.on("shell", (data) => {
+    // logger.info(data);
     shell.write(data);
   });
   socket.on("disconnect", function () {

@@ -132,6 +132,7 @@ const App = () => {
     // }, 10000)
 
     term.onData(function (data) {
+      console.log(data);
       socket.emit("shell", data);
     });
 

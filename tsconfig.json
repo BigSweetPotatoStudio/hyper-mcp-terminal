@@ -3,6 +3,7 @@
         "allowJs": true,
         "checkJs": false,
         "composite": false,
+        "skipLibCheck": false,
         "esModuleInterop": true,
         "jsx": "react",
         "module": "esnext",
@@ -12,6 +13,7 @@
         "sourceMap": true,
         "strict": false,
         "strictNullChecks": false,
+        "outDir": "./dist",
         "lib": [
             "ESNext",
             "DOM"
@@ -26,7 +28,5 @@
     },
     "include": [
         "src",
-        "frontend",
-        "tests/test.ts"
     ]
 }
