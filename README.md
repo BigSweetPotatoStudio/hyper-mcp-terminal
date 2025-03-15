@@ -21,9 +21,17 @@ env:
 
 ## 使用图片
 
-![e679a8b4e0924b882753edd3d2392a2d](https://github.com/user-attachments/assets/981a7047-ab87-4fb3-a77a-c5d5f2a815cf)
-![4fd6cf2aff7f2e13ed1993e297129db4](https://github.com/user-attachments/assets/9e1067b8-ef1c-4d7b-8d68-31053f1001d8)
-![c98448b8e31e062f7fd7e6a07c9d487a](https://github.com/user-attachments/assets/d67dd8f9-4658-4e79-986a-1bbe4d855c92)
+![image](https://github.com/user-attachments/assets/5c79e0c6-1f0c-4fac-ba77-13609e5e32c4)
+
+![image](https://github.com/user-attachments/assets/3488724b-f061-454d-bfb3-06c69e0e2f83)
+
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
+未选择任何文件
+Attach files by dragging & dropping, selecting or pasting them.
+Editing hyper-mcp-terminal/README.md at main · BigSweetPotatoStudio/hyper-mcp-terminal
+📌
+![image](https://github.com/user-attachments/assets/0fcfab81-b5e8-49bb-b990-eee5dcda1b29)
+
 
 
 ## Usage
