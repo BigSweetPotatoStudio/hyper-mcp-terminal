@@ -13,19 +13,19 @@ import { execSync } from "child_process";
 import strip from "strip-ansi";
 import * as pty from "node-pty";
 
-import log4js from "log4js";
-import dayjs from "dayjs";
-log4js.configure({
-  appenders: {
-    log: {
-      type: "file",
-      filename: `${dayjs().format("YYYY-MM-DD")}.log`,
-    },
-  },
-  categories: { default: { appenders: ["log"], level: "trace" } },
-});
-const logger = log4js.getLogger();
-logger.level = "OFF";
+// import log4js from "log4js";
+// import dayjs from "dayjs";
+// log4js.configure({
+//   appenders: {
+//     log: {
+//       type: "file",
+//       filename: `${dayjs().format("YYYY-MM-DD")}.log`,
+//     },
+//   },
+//   categories: { default: { appenders: ["log"], level: "trace" } },
+// });
+// const logger = log4js.getLogger();
+// logger.level = "OFF";
 // let binds = ["log", "trace", "debug", "info", "warn", "error", "fatal"];
 
 // for (let level of binds) {
@@ -100,7 +100,7 @@ server.tool(
     terminal.onData((data) => {
       c.stdout += data;
       c.commamdOutput += data;
-      logger.info("mcp out:\n", data);
+      // logger.info("mcp out:\n", data);
     });
     // terminal.write(`ssh ldh@ubuntu\r`);
     while (1) {
@@ -143,7 +143,7 @@ server.tool(
     if (c == null) {
       throw new Error("terminalID not found, please create terminal first");
     }
-    logger.info(`execute-command: ${command}`);
+    // logger.info(`execute-command: ${command}`);
 
     c.commamdOutput = "";
     c.terminal.write(`${command}\r`);
