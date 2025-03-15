@@ -1,13 +1,13 @@
 {
   "name": "hyper-mcp-terminal",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hello World!",
   "main": "main.js",
   "type": "module",
   "author": "Jane Doe",
   "license": "MIT",
   "bin": {
-    "hyper-mcp-terminal": "dist/index.js"
+    "hyper-mcp-terminal": "dist/index.mjs"
   },
   "scripts": {
     "dev": "nodemon --watch src -e ts,tsx --exec tsx src/server.ts",
