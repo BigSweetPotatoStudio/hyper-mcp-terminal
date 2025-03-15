@@ -26,11 +26,7 @@ env:
 
 ![image](https://github.com/user-attachments/assets/3488724b-f061-454d-bfb3-06c69e0e2f83)
 
-Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
-未选择任何文件
-Attach files by dragging & dropping, selecting or pasting them.
-Editing hyper-mcp-terminal/README.md at main · BigSweetPotatoStudio/hyper-mcp-terminal
-📌
+
 ![image](https://github.com/user-attachments/assets/0fcfab81-b5e8-49bb-b990-eee5dcda1b29)
 
 
@@ -39,4 +35,5 @@ Editing hyper-mcp-terminal/README.md at main · BigSweetPotatoStudio/hyper-mcp-t
 
 ### hyperchat安装方式  [下载地址](https://github.com/BigSweetPotatoStudio/HyperChat)
 
-![image](https://github.com/user-attachments/assets/c40feb2c-48cf-4965-b743-7ccd12f6b207)
+![image](https://github.com/user-attachments/assets/5b82fd2b-64f1-405a-afea-130052995f52)
+
