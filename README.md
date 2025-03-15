@@ -5,19 +5,20 @@ npx -y hyper-mcp-terminal
 
 
 ## 普通安装
+
+```
 command:  npx
 
 args:  -y hyper-mcp-terminal
 
 env:  
-    // 通过输出不变来判断是否结束 默认是 15次，检测间隔是100ms，也就是1.5s输出一直不变，表示命令结束了
+    //(可选) 通过输出不变来判断是否结束 默认是 15次，检测间隔是100ms，也就是1.5s输出一直不变，表示命令结束了
     Terminal_End_CheckCount || 15;
-    // 终端输出最大长度给大模型的
+    //(可选) 终端输出最大长度给大模型的
     Terminal_Output_MaxToken || 10000 
-    //终端 5分钟 没输入挂掉
+    //(可选) 终端 5分钟 没输入挂掉
     process.env.Terminal_Timeout || 5 * 60 * 1000 
-
-
+```
 
 ## 使用图片
 
