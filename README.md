@@ -33,11 +33,13 @@ env:
 
 ![image](https://github.com/user-attachments/assets/0fcfab81-b5e8-49bb-b990-eee5dcda1b29)
 
-
+## 演示视频
+https://www.youtube.com/watch?v=fVeUWu2Cvk0
 
 ## Usage
 
 ### hyperchat安装方式  [下载地址](https://github.com/BigSweetPotatoStudio/HyperChat)
 
 ![image](https://github.com/user-attachments/assets/5b82fd2b-64f1-405a-afea-130052995f52)
+
 
