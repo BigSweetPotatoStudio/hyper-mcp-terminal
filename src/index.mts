@@ -5,42 +5,21 @@ import {
   McpServer,
   ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
 import os from "os";
 import fs from "fs";
 import uuid from "uuid";
 import { execSync } from "child_process";
 import strip from "strip-ansi";
 import * as pty from "node-pty";
+import pack from "../package.json";
 
-// import log4js from "log4js";
-// import dayjs from "dayjs";
-// log4js.configure({
-//   appenders: {
-//     log: {
-//       type: "file",
-//       filename: `${dayjs().format("YYYY-MM-DD")}.log`,
-//     },
-//   },
-//   categories: { default: { appenders: ["log"], level: "trace" } },
-// });
-// const logger = log4js.getLogger();
-// logger.level = "OFF";
-// let binds = ["log", "trace", "debug", "info", "warn", "error", "fatal"];
-
-// for (let level of binds) {
-//   console["o_" + level] = console[level];
-//   console[level] = function (...args) {
-//     console["o_" + level].apply(console, args);
-//     log[level](...args);
-//   };
-// }
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
-console.log("start hyper-mcp-terminal!");
+console.log("start hyper-mcp-terminal!", pack.version);
 // Create an MCP server
-const server = new McpServer({
+export const server = new McpServer({
   name: "hyper-mcp-terminal",
-  version: "1.0.0",
+  version: pack.version,
 });
 
 type Context = {
@@ -184,7 +163,12 @@ server.tool(
     }
 
     return {
-      content: [{ type: "text", text: strip(c.stdout.slice(c.lastIndex)).slice(-maxToken) }],
+      content: [
+        {
+          type: "text",
+          text: strip(c.stdout.slice(c.lastIndex)).slice(-maxToken),
+        },
+      ],
     };
   }
 );
@@ -221,7 +205,3 @@ server.tool(
     };
   }
 );
-
-// Start receiving messages on stdin and sending messages on stdout
-const transport = new StdioServerTransport();
-await server.connect(transport);
