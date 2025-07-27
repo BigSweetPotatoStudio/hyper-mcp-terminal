@@ -22,7 +22,6 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 
 import { io } from "socket.io-client";
-import querystring from "querystring-es3";
 const TextArea = Input.TextArea;
 const Item = List.Item;
 import { PlusSquareOutlined } from "@ant-design/icons";
@@ -30,9 +29,6 @@ import { PlusSquareOutlined } from "@ant-design/icons";
 moment.locale("zh-cn");
 const socket = io(document.location.origin, {
   path: "/bash/",
-  auth: {
-    passwd: querystring.parse(window.location.search.slice(1)).passwd || "",
-  },
 });
 socket.on("connect", function () {
   console.log("connected");

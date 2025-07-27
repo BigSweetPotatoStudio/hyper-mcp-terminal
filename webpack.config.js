@@ -1,5 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import HtmlWebpackPlugin from "html-webpack-plugin";
 
 // Create equivalents for __dirname and __filename which aren't available in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +28,12 @@ export default {
     filename: "index.js",
     path: path.resolve(__dirname, "build"),
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./frontend/index.html",
+      filename: "index.html",
+    }),
+  ],
   devServer: {
     static: {
       directory: path.join(__dirname, "./"),

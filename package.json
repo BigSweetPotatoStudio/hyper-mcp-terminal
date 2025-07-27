@@ -28,6 +28,7 @@
     "@types/react": "^18.0.17",
     "antd": "^4.22.8",
     "css-loader": "^6.7.1",
+    "html-webpack-plugin": "^5.6.3",
     "moment": "^2.29.3",
     "querystring-es3": "^0.2.1",
     "react": "^18.1.0",
