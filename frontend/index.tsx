@@ -111,13 +111,15 @@ const App = () => {
       };
 
       term.onData(function (data) {
-        if (connected) {
-          socket.emit("shell", data);
-        }
+        // 直接发送数据，socket.io 会处理连接状态
+        socket.emit("shell", data);
       });
 
+      // 添加调试信息
+      console.log("设置 socket 监听器");
+
       socket.on("connect", function () {
-        console.log("连接成功");
+        console.log("Socket.IO 连接成功");
         setConnected(true);
         setLoading(false);
         setError(null);
@@ -132,13 +134,13 @@ const App = () => {
       });
 
       socket.on("disconnect", function () {
-        console.log("连接断开");
+        console.log("Socket.IO 连接断开");
         setConnected(false);
         setError("连接已断开");
       });
 
       socket.on("connect_error", function (error) {
-        console.error("连接错误:", error);
+        console.error("Socket.IO 连接错误:", error);
         setError("无法连接到服务器");
         setLoading(false);
       });
@@ -195,7 +197,7 @@ const App = () => {
         
         <div 
           id="terminal" 
-          className={`terminal-wrapper ${loading ? 'hidden' : 'block'}`}
+          className={`terminal-wrapper h-screen`}
         ></div>
       </div>
     </ConfigProvider>

@@ -15,7 +15,7 @@ html, body {
   left: 0;
 }
 
-.terminal .xterm-viewport {
-    overflow: hidden;
-  }
+/* .terminal .xterm-viewport {
+  overflow: hidden;
+} */
 
