@@ -1,13 +1,14 @@
 import { Shell } from "./shell";
-import koa from "koa";
+import express from "express";
 import path from "path";
-import { createServer } from "http";
 import { Server } from "socket.io";
 import { options } from "./commander";
-import serve from "koa-static";
-const app = new koa();
+
 import { fileURLToPath } from "url";
 import os from "os";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+// 导入 MCP 服务器实例和终端创建函数
+import { server, createTerminalSession, globalTerminalMap, type Context } from "./index.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
@@ -16,11 +17,12 @@ const __dirname = path.dirname(__filename);
 console.log(options);
 
 // console.log(path.resolve(__dirname, '../build'));
+const app = express();
 
+app.use(express.json());
+app.use(express.static(path.resolve(__dirname, "../build")));
 
-app.use(serve(path.resolve(__dirname, "../build")));
-
-const httpServer = createServer(app.callback());
+const httpServer = createServer(app);
 const io = new Server(httpServer, {
   path: "/bash/",
   cors: {
@@ -31,6 +33,7 @@ const io = new Server(httpServer, {
 
 import log4js from "log4js";
 import dayjs from "dayjs";
+import { createServer } from "http";
 const tempDir = os.tmpdir();
 const logFilePath = path.join(tempDir, `hyper-mcp-terminal-${dayjs().format("YYYY-MM-DD")}.log`);
 log4js.configure({
@@ -47,19 +50,54 @@ const logger = log4js.getLogger();
 
 io.on("connect", (socket) => {
   console.log("connected");
-  const shell = new Shell();
-  shell.onData((data: string) => {
-    // logger.info(data);
-    socket.emit("shell", data);
-  });
-  socket.on("shell", (data) => {
-    // logger.info(data);
-    shell.write(data);
-  });
-  socket.on("disconnect", function () {
-    console.log("user disconnected");
-    shell.kill();
-  });
+
+  // 创建新的终端会话
+  const terminalID = createTerminalSession(socket.id);
+  const context = globalTerminalMap.get(terminalID);
+
+  if (context) {
+    context.terminal.onData((data: string) => {
+      // logger.info(data);
+      socket.emit("shell", data);
+    });
+
+    socket.on("shell", (data) => {
+      // logger.info(data);
+      context.terminal.write(data);
+    });
+
+    socket.on("disconnect", function () {
+      console.log("user disconnected");
+      context.terminal.kill();
+      globalTerminalMap.delete(terminalID);
+    });
+  }
 });
 
-httpServer.listen(parseInt(options.port));
+
+
+// 添加 MCP HTTP 路由
+app.post("/mcp", async (req, res) => {
+  try {
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    res.on('close', () => {
+      // Logger.debug('Request closed');
+      transport.close();
+      server.close();
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    logger.error("MCP request error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 统一使用3000端口
+const PORT = 3000;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`MCP HTTP endpoint: http://localhost:${PORT}/mcp`);
+});
