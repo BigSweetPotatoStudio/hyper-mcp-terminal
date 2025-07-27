@@ -6,7 +6,6 @@ import { options } from "./commander";
 
 import { fileURLToPath } from "url";
 import os from "os";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
 // 导入 MCP 服务器实例和终端创建函数
 import { server, createTerminalSession, globalTerminalMap, type Context } from "./index.mjs";
 
@@ -76,24 +75,16 @@ io.on("connect", (socket) => {
 
 
 
-// 添加 MCP HTTP 路由
-app.post("/mcp", async (req, res) => {
-  try {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-    });
-    res.on('close', () => {
-      // Logger.debug('Request closed');
-      transport.close();
-      server.close();
-    });
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
-  } catch (error) {
-    logger.error("MCP request error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+// 添加 MCP HTTP 路由 - 暂时禁用，因为 SDK 版本不兼容
+// app.post("/mcp", async (req, res) => {
+//   try {
+//     // TODO: 更新到新的 MCP SDK API
+//     res.status(501).json({ error: "MCP HTTP endpoint not implemented" });
+//   } catch (error) {
+//     logger.error("MCP request error:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 
 // 统一使用3000端口
 const PORT = 3000;

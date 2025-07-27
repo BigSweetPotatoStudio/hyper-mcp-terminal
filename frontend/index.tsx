@@ -18,7 +18,12 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { io } from "socket.io-client";
 
 dayjs.locale("zh-cn");
-const socket = io(document.location.origin, {
+
+// Electron 环境检测和 socket 连接配置
+const isElectron = !!(window as any).electronAPI;
+const socketUrl = isElectron ? 'http://localhost:3000' : document.location.origin;
+
+const socket = io(socketUrl, {
   path: "/bash/",
 });
 // 错误边界组件
@@ -76,6 +81,22 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [appInfo, setAppInfo] = useState<{name?: string, version?: string}>({});
+
+  // Electron 应用信息获取
+  useEffect(() => {
+    if (isElectron && (window as any).electronAPI) {
+      Promise.all([
+        (window as any).electronAPI.getAppName(),
+        (window as any).electronAPI.getAppVersion()
+      ]).then(([name, version]) => {
+        setAppInfo({ name, version });
+        document.title = `${name} v${version}`;
+      }).catch(err => {
+        console.error('获取应用信息失败:', err);
+      });
+    }
+  }, []);
 
   useEffect(function () {
     try {
@@ -160,7 +181,7 @@ const App = () => {
   }, []);
   return (
     <ConfigProvider locale={zhCN}>
-      <div className="terminal-container">
+      <div className="terminal-container flex flex-col h-screen">
         {loading && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
             <Spin size="large" tip="正在连接终端..." />
@@ -197,8 +218,26 @@ const App = () => {
         
         <div 
           id="terminal" 
-          className={`terminal-wrapper h-screen`}
+          className="terminal-wrapper flex-1"
         ></div>
+        
+        {/* Electron 状态栏 */}
+        {isElectron && (
+          <div className="flex justify-between items-center px-2 py-1 bg-gray-800 text-gray-300 text-xs border-t border-gray-600">
+            <div className="flex items-center space-x-4">
+              <span className={`flex items-center ${connected ? 'text-green-400' : 'text-red-400'}`}>
+                <span className={`w-2 h-2 rounded-full mr-1 ${connected ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                {connected ? '已连接' : '未连接'}
+              </span>
+              <span>WebSocket: {socketUrl}</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              {appInfo.name && <span>{appInfo.name}</span>}
+              {appInfo.version && <span>v{appInfo.version}</span>}
+              <span>Electron</span>
+            </div>
+          </div>
+        )}
       </div>
     </ConfigProvider>
   );
