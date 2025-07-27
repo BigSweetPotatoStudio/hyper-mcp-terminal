@@ -48,7 +48,7 @@ const logger = log4js.getLogger();
 io.on("connect", (socket) => {
   console.log("connected");
   const shell = new Shell();
-  shell.onData((data) => {
+  shell.onData((data: string) => {
     // logger.info(data);
     socket.emit("shell", data);
   });

@@ -24,9 +24,11 @@
   },
   "devDependencies": {
     "@ant-design/icons": "^4.7.0",
+    "@types/koa-static": "^4.0.4",
     "@types/node": "^22.13.10",
-    "@types/react": "^18.0.17",
-    "antd": "^4.22.8",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "antd": "^5.26.6",
     "css-loader": "^6.7.1",
     "html-webpack-plugin": "^5.6.3",
     "moment": "^2.29.3",

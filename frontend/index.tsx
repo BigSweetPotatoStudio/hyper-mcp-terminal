@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Component, ErrorInfo } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  Button,
   ConfigProvider,
-  DatePicker,
-  message,
-  Input,
-  Divider,
-  List,
-  Typography,
+  Spin,
+  Alert,
 } from "antd";
 // 由于 antd 组件的默认文案是英文，所以需要修改为中文
-import zhCN from "antd/lib/locale/zh_CN";
-import moment from "moment";
-import "moment/locale/zh-cn";
-import "antd/dist/antd.css";
+import zhCN from "antd/locale/zh_CN";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 import "@xterm/xterm/css/xterm.css";
 import "./index.css";
 import { Terminal } from "@xterm/xterm";
@@ -22,218 +16,208 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 
 import { io } from "socket.io-client";
-const TextArea = Input.TextArea;
-const Item = List.Item;
-import { PlusSquareOutlined } from "@ant-design/icons";
 
-moment.locale("zh-cn");
+dayjs.locale("zh-cn");
 const socket = io(document.location.origin, {
   path: "/bash/",
 });
-socket.on("connect", function () {
-  console.log("connected");
-  // socket.emit("shell", 'ls\n');
-  // socket.emit("shell", 'ls -l\n');
-});
+// 错误边界组件
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
 
-const { Search } = Input;
-
-function concatenate(...arrays) {
-  let totalLen = 0;
-
-  for (let arr of arrays) totalLen += arr.byteLength;
-
-  let res = new Uint8Array(totalLen);
-
-  let offset = 0;
-
-  for (let arr of arrays) {
-    let uint8Arr = new Uint8Array(arr);
-
-    res.set(uint8Arr, offset);
-
-    offset += arr.byteLength;
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  return res.buffer;
-}
-const origin_cmds = [];
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
 
-let ResulData = new ArrayBuffer(0);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('应用程序错误:', error, errorInfo);
+  }
 
-function _translateBufferLineToStringWithWrap(
-  lineIndex: number,
-  trimRight: boolean,
-  terminal: Terminal
-): [string, number] {
-  let lineString = "";
-  let lineWrapsToNext: boolean;
-  let prevLinesToWrap: boolean;
-
-  do {
-    const line = terminal.buffer.active.getLine(lineIndex);
-    if (!line) {
-      break;
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ConfigProvider locale={zhCN}>
+          <div style={{ padding: '20px' }}>
+            <Alert
+              message="应用程序错误"
+              description={`应用程序遇到了一个错误: ${this.state.error?.message || '未知错误'}`}
+              type="error"
+              showIcon
+              action={
+                <button 
+                  onClick={() => window.location.reload()}
+                  style={{
+                    background: '#ff4d4f',
+                    color: 'white',
+                    border: 'none',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  刷新页面
+                </button>
+              }
+            />
+          </div>
+        </ConfigProvider>
+      );
     }
 
-    if (line.isWrapped) {
-      lineIndex--;
-    }
-
-    prevLinesToWrap = line.isWrapped;
-  } while (prevLinesToWrap);
-
-  const startLineIndex = lineIndex;
-
-  do {
-    const nextLine = terminal.buffer.active.getLine(lineIndex + 1);
-    lineWrapsToNext = nextLine ? nextLine.isWrapped : false;
-    const line = terminal.buffer.active.getLine(lineIndex);
-    if (!line) {
-      break;
-    }
-    lineString += line
-      .translateToString(!lineWrapsToNext && trimRight)
-      .substring(0, terminal.cols);
-    lineIndex++;
-  } while (lineWrapsToNext);
-
-  return [lineString, startLineIndex];
+    return this.props.children;
+  }
 }
 
 const App = () => {
-  let [result, setResult] = useState("");
-  let [cmds, setCmds] = useState(origin_cmds);
-  const [inputText, setInputText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [connected, setConnected] = useState(false);
+
   useEffect(function () {
-    let dom = document.getElementById("terminal")!;
-    var term = new Terminal({
-      cols: 80,
-      rows: 30,
-    });
-    // term.open(document.getElementById('terminal'));
-    // term.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ')
-    // return;
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    term.loadAddon(new WebLinksAddon());
-    term.open(dom);
-    fitAddon.fit();
-    window.onresize = () => {
+    // 确保 DOM 元素已经渲染
+    const initTerminal = () => {
+      try {
+        let dom = document.getElementById("terminal");
+        if (!dom) {
+          // 如果元素还没有渲染，稍后重试
+          setTimeout(initTerminal, 100);
+          return;
+        }
+
+      var term = new Terminal({
+        cols: 80,
+        rows: 30,
+      });
+      
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.loadAddon(new WebLinksAddon());
+      term.open(dom);
       fitAddon.fit();
+      
+      window.onresize = () => {
+        fitAddon.fit();
+      };
+
+      term.onData(function (data) {
+        if (connected) {
+          socket.emit("shell", data);
+        }
+      });
+
+      socket.on("connect", function () {
+        console.log("连接成功");
+        setConnected(true);
+        setLoading(false);
+        setError(null);
+      });
+
+      socket.on("shell", (data) => {
+        term.write(data);
+      });
+
+      socket.on("disconnect", function () {
+        console.log("连接断开");
+        setConnected(false);
+        setError("连接已断开");
+      });
+
+      socket.on("connect_error", function (error) {
+        console.error("连接错误:", error);
+        setError("无法连接到服务器");
+        setLoading(false);
+      });
+
+      return () => {
+        socket.off("connect");
+        socket.off("shell");
+        socket.off("disconnect");
+        socket.off("connect_error");
+        term.dispose();
+      };
+      } catch (err) {
+        console.error("初始化终端失败:", err);
+        setError("初始化终端失败");
+        setLoading(false);
+      }
     };
-
-    // setInterval(() => {
-    //     console.log(_translateBufferLineToStringWithWrap(-1, false,term));
-    // }, 10000)
-
-    term.onData(function (data) {
-      console.log(data);
-      socket.emit("shell", data);
-    });
-
-    socket.on("shell", (data) => {
-      term.write(data);
-    });
-    socket.on("disconnect", function () {
-      console.log("user disconnected");
-    });
+    
+    // 开始初始化
+    initTerminal();
   }, []);
+  if (loading) {
+    return (
+      <ConfigProvider locale={zhCN}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <Spin size="large" tip="正在连接终端..." />
+        </div>
+      </ConfigProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <ConfigProvider locale={zhCN}>
+        <div className="container" style={{ padding: '20px' }}>
+          <Alert
+            message="终端连接错误"
+            description={error}
+            type="error"
+            showIcon
+            action={
+              <button 
+                onClick={() => window.location.reload()}
+                style={{
+                  background: '#ff4d4f',
+                  color: 'white',
+                  border: 'none',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                刷新页面
+              </button>
+            }
+          />
+        </div>
+      </ConfigProvider>
+    );
+  }
+
   return (
     <ConfigProvider locale={zhCN}>
       <div className="container">
-        <div id="terminal"></div>
-        {/* <div id="cmds">
-          <List<any>
-            className="list"
-            size="small"
-            bordered
-            dataSource={cmds}
-            renderItem={(item) => (
-              <Item>
-                <Button
-                  onClick={() => {
-                    if (typeof item.value === "string") {
-                      ResulData = new ArrayBuffer(0);
-                      socket.emit("shell", item.value);
-                    } else if (typeof item.value === "function") {
-                      item.value(
-                        function (cmd) {
-                          socket.emit("shell", cmd);
-                          ResulData = new ArrayBuffer(0);
-                        },
-                        function (reg, timer = 5000) {
-                          return new Promise((resolve, reject) => {
-                            let t: any;
-                            let timeout = false;
-                            let t2 = setTimeout(() => {
-                              timeout = true;
-                              console.log("超时");
-                            }, timer);
-                            function check() {
-                              if (timeout) {
-                                message.error("超时");
-                                reject(new Error("超时"));
-                                return;
-                              }
-                              // console.log(ResulData);
-                              let text = new TextDecoder("utf-8").decode(
-                                ResulData
-                              );
-                              // console.log(text);
-
-                              if (text.match(reg)) {
-                                resolve(1);
-                                clearTimeout(t2);
-                                clearTimeout(t);
-                                return;
-                              } else {
-                                t = setTimeout(check, 200);
-                              }
-                            }
-                            check();
-                          });
-                        }
-                      );
-                    }
-                  }}
-                  type="dashed"
-                  block
-                >
-                  {item.label}
-                </Button>
-              </Item>
-            )}
+        {!connected && (
+          <Alert
+            message="连接状态"
+            description="终端连接已断开，请检查网络连接"
+            type="warning"
+            showIcon
+            style={{ marginBottom: '10px' }}
           />
-          <TextArea
-            value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-            }}
-          ></TextArea>
-          <Button
-            style={{ width: "100%" }}
-            onClick={() => {
-              let cmd = inputText + "\n";
-              socket.emit("shell", cmd);
-              if (inputText.trim() == "") {
-                return;
-              }
-              cmds.push({
-                label: cmd,
-                value: cmd,
-              });
-              setCmds(cmds.concat([]));
-            }}
-          >
-            submit
-          </Button>
-        </div> */}
+        )}
+        <div id="terminal"></div>
       </div>
     </ConfigProvider>
   );
 };
 
 const container = document.getElementById("root");
-const root = createRoot(container); // createRoot(container!) if you use TypeScript
-root.render(<App />);
+const root = createRoot(container!);
+root.render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);

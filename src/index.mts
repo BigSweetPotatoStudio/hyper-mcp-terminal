@@ -25,20 +25,20 @@ export const server = new McpServer({
 type Context = {
   terminal: pty.IPty;
   stdout: string;
-  commamdOutput: string;
+  commandOutput: string;
   lastIndex: number;
   timer: NodeJS.Timeout;
 };
 const terminalMap = new Map<number, Context>();
 
-let lastTerminalID = 0;
+let lastTerminalID: number = 0;
 
 // const promptPattern = /\$\s*$|\>\s*$|#\s*$/m;
-const checkCount = parseInt(process.env.Terminal_End_CheckCount) || 15;
-const maxToken = parseInt(process.env.Terminal_Output_MaxToken) || 10000;
-const timeout = parseInt(process.env.Terminal_Timeout) || 5 * 60 * 1000;
-const arr = [];
-function checkEnd(str: string) {
+const checkCount = parseInt(process.env.Terminal_End_CheckCount || '15');
+const maxToken = parseInt(process.env.Terminal_Output_MaxToken || '10000');
+const timeout = parseInt(process.env.Terminal_Timeout || '300000');
+const arr: string[] = [];
+function checkEnd(str: string): boolean {
   if (arr.length < checkCount) {
     arr.push(str);
     return false;
@@ -66,9 +66,9 @@ server.tool(
       env: process.env,
     });
 
-    let c = {
+    let c: Context = {
       terminal: terminal,
-      commamdOutput: "",
+      commandOutput: "",
       stdout: "",
       lastIndex: 0,
       timer: setTimeout(() => {
@@ -78,7 +78,7 @@ server.tool(
     };
     terminal.onData((data) => {
       c.stdout += data;
-      c.commamdOutput += data;
+      c.commandOutput += data;
       // logger.info("mcp out:\n", data);
     });
     // terminal.write(`ssh ldh@ubuntu\r`);
@@ -124,24 +124,24 @@ server.tool(
     }
     // logger.info(`execute-command: ${command}`);
 
-    c.commamdOutput = "";
+    c.commandOutput = "";
     c.terminal.write(`${command}\r`);
     clearTimeout(c.timer);
     c.timer = setTimeout(() => {
-      c.terminal.kill();
-      terminalMap.delete(c.terminal.pid);
+      c!.terminal.kill();
+      terminalMap.delete(c!.terminal.pid);
     }, timeout);
 
     while (1) {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (checkEnd(c.commamdOutput)) {
+      if (checkEnd(c.commandOutput)) {
         break;
       }
     }
     c.lastIndex = c.stdout.length;
     return {
       content: [
-        { type: "text", text: strip(c.commamdOutput).slice(-maxToken) },
+        { type: "text", text: strip(c.commandOutput).slice(-maxToken) },
       ],
     };
   }
@@ -188,19 +188,19 @@ server.tool(
       throw new Error("terminalID not found, please create terminal first");
     }
 
-    c.commamdOutput = "";
-    c.terminal.write(``);
+    c.commandOutput = "";
+    c.terminal.write('\u0003');
 
     while (1) {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (checkEnd(c.commamdOutput)) {
+      if (checkEnd(c.commandOutput)) {
         break;
       }
     }
 
     return {
       content: [
-        { type: "text", text: strip(c.commamdOutput).slice(-maxToken) },
+        { type: "text", text: strip(c.commandOutput).slice(-maxToken) },
       ],
     };
   }

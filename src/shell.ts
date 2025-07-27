@@ -5,7 +5,7 @@ import os from "node:os";
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 
 export class Shell {
-  start;
+  start: any;
   term = pty.spawn(shell, [], {
     name: "xterm-color",
     cols: 80,
@@ -18,12 +18,12 @@ export class Shell {
       console.log("终端进程已退出");
     });
   }
-  write(data) {
+  write(data: string) {
     // console.log('write: ', data);
     this.term.write(data);
   }
-  onData(cb) {
-    this.term.onData((data) => {
+  onData(cb: (data: string) => void) {
+    this.term.onData((data: string) => {
     //   console.log('shell out:\n', data.toString());
       cb(data);
     });

@@ -11,8 +11,8 @@
         "removeComments": false,
         "resolveJsonModule": true,
         "sourceMap": true,
-        "strict": false,
-        "strictNullChecks": false,
+        "strict": true,
+        "strictNullChecks": true,
         "outDir": "./dist",
         "lib": [
             "ESNext",
