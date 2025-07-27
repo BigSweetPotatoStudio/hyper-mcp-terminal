@@ -1,17 +1,21 @@
-#root {
-    height: calc(100%);
+@import "tailwindcss";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.container {
-    display: flex;
-    height: calc(100%);
+html, body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
-#terminal {
-    flex-grow: 1;
-    /* width: 70%; */
-}
+.terminal .xterm-viewport {
+    overflow: hidden;
+  }
 
-#cmds {
-    width: 350px;
-}

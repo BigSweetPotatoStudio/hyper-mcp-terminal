@@ -48,7 +48,7 @@ class ErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <ConfigProvider locale={zhCN}>
-          <div style={{ padding: '20px' }}>
+          <div className="p-5">
             <Alert
               message="应用程序错误"
               description={`应用程序遇到了一个错误: ${this.state.error?.message || '未知错误'}`}
@@ -57,14 +57,7 @@ class ErrorBoundary extends Component<
               action={
                 <button 
                   onClick={() => window.location.reload()}
-                  style={{
-                    background: '#ff4d4f',
-                    color: 'white',
-                    border: 'none',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white border-none px-2 py-1 rounded cursor-pointer"
                 >
                   刷新页面
                 </button>
@@ -85,26 +78,33 @@ const App = () => {
   const [connected, setConnected] = useState(false);
 
   useEffect(function () {
-    // 确保 DOM 元素已经渲染
-    const initTerminal = () => {
-      try {
-        let dom = document.getElementById("terminal");
-        if (!dom) {
-          // 如果元素还没有渲染，稍后重试
-          setTimeout(initTerminal, 100);
-          return;
-        }
+    try {
+      let dom = document.getElementById("terminal");
+      if (!dom) {
+        setError("终端容器元素未找到");
+        setLoading(false);
+        return;
+      }
 
       var term = new Terminal({
-        cols: 80,
-        rows: 30,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        fontSize: 14,
+        cursorBlink: true,
+        allowTransparency: false,
+        theme: {
+          background: '#000000'
+        }
       });
       
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.loadAddon(new WebLinksAddon());
       term.open(dom);
-      fitAddon.fit();
+      
+      // 延迟调用 fit() 确保 DOM 完全渲染
+      setTimeout(() => {
+        fitAddon.fit();
+      }, 100);
       
       window.onresize = () => {
         fitAddon.fit();
@@ -121,6 +121,10 @@ const App = () => {
         setConnected(true);
         setLoading(false);
         setError(null);
+        // 连接成功后再次调用 fit() 确保尺寸正确
+        setTimeout(() => {
+          fitAddon.fit();
+        }, 200);
       });
 
       socket.on("shell", (data) => {
@@ -146,69 +150,53 @@ const App = () => {
         socket.off("connect_error");
         term.dispose();
       };
-      } catch (err) {
-        console.error("初始化终端失败:", err);
-        setError("初始化终端失败");
-        setLoading(false);
-      }
-    };
-    
-    // 开始初始化
-    initTerminal();
+    } catch (err) {
+      console.error("初始化终端失败:", err);
+      setError("初始化终端失败");
+      setLoading(false);
+    }
   }, []);
-  if (loading) {
-    return (
-      <ConfigProvider locale={zhCN}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <Spin size="large" tip="正在连接终端..." />
-        </div>
-      </ConfigProvider>
-    );
-  }
-
-  if (error) {
-    return (
-      <ConfigProvider locale={zhCN}>
-        <div className="container" style={{ padding: '20px' }}>
+  return (
+    <ConfigProvider locale={zhCN}>
+      <div className="terminal-container">
+        {loading && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <Spin size="large" tip="正在连接终端..." />
+          </div>
+        )}
+        
+        {error && (
           <Alert
             message="终端连接错误"
             description={error}
             type="error"
             showIcon
+            className="absolute top-2.5 left-2.5 right-2.5 z-50"
             action={
               <button 
                 onClick={() => window.location.reload()}
-                style={{
-                  background: '#ff4d4f',
-                  color: 'white',
-                  border: 'none',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="bg-red-500 hover:bg-red-600 text-white border-none px-2 py-1 rounded cursor-pointer"
               >
                 刷新页面
               </button>
             }
           />
-        </div>
-      </ConfigProvider>
-    );
-  }
-
-  return (
-    <ConfigProvider locale={zhCN}>
-      <div className="container">
-        {!connected && (
+        )}
+        
+        {!connected && !loading && !error && (
           <Alert
             message="连接状态"
             description="终端连接已断开，请检查网络连接"
             type="warning"
             showIcon
-            style={{ marginBottom: '10px' }}
+            className="absolute top-2.5 left-2.5 right-2.5 z-50"
           />
         )}
-        <div id="terminal"></div>
+        
+        <div 
+          id="terminal" 
+          className={`terminal-wrapper ${loading ? 'hidden' : 'block'}`}
+        ></div>
       </div>
     </ConfigProvider>
   );
