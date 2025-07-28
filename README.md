@@ -116,9 +116,7 @@ hyper-mcp-terminal/
     "port": 3000
   },
   "terminal": {
-    "maxOutputTokens": 10000,
-    "endCheckCount": 15,
-    "timeout": 300000
+    "maxOutputTokens": 10000
   },
   "window": {
     "width": 1200,
