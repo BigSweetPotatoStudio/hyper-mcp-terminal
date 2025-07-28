@@ -1,7 +1,7 @@
 // 共享的窗口创建逻辑
 import { BrowserWindow, shell, ipcMain, app } from 'electron';
 import path from 'path';
-import { appDataManager, AppSettings } from './app-data';
+import { appDataManager, AppSettings } from './app-data.js';
 
 // 设置 IPC 处理程序
 export function setupIPC() {
