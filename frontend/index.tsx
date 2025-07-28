@@ -163,6 +163,11 @@ const App = () => {
     setSessions(prev => [...prev, session]);
     setActiveTabKey(sessionId);
     
+    // 通知后端这是新的活跃终端（延迟发送，确保连接已建立）
+    setTimeout(() => {
+      socket.emit('set-active-terminal', { sessionId });
+    }, 100);
+    
     return sessionId;
   }, []);
 
@@ -246,7 +251,14 @@ const App = () => {
         <Tabs
           type="editable-card"
           activeKey={activeTabKey}
-          onChange={setActiveTabKey}
+          onChange={(newActiveKey) => {
+            setActiveTabKey(newActiveKey);
+            // 通知后端活跃标签页变更
+            const activeSession = sessions.find(s => s.id === newActiveKey);
+            if (activeSession) {
+              activeSession.socket.emit('set-active-terminal', { sessionId: newActiveKey });
+            }
+          }}
           onEdit={(targetKey, action) => {
             if (action === 'add') {
               createNewSession();

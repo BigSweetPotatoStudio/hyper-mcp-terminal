@@ -19,6 +19,12 @@ const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 // 全局终端映射，用于在 Web 界面和 MCP 之间共享终端会话
 export const globalTerminalMap = new Map<number, Context>();
 export let globalLastTerminalID = 0;
+
+// 更新活跃终端ID的函数
+export function setActiveTerminalID(terminalID: number) {
+  globalLastTerminalID = terminalID;
+  console.log(`Updated active terminal ID to: ${terminalID}`);
+}
 console.log("start hyper-mcp-terminal!", pack.version);
 // Create an MCP server
 export const server = new McpServer({

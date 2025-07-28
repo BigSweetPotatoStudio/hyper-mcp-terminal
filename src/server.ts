@@ -7,7 +7,7 @@ import { options } from "./commander";
 import { fileURLToPath } from "url";
 import os from "os";
 // 导入 MCP 服务器实例和终端创建函数
-import { server, createTerminalSession, globalTerminalMap, type Context } from "./index.mjs";
+import { server, createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./index.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
@@ -73,6 +73,13 @@ io.on("connect", (socket) => {
     socket.on("shell", (data) => {
       // logger.info(data);
       context.terminal.write(data);
+    });
+
+    // 监听活跃终端切换事件
+    socket.on("set-active-terminal", ({ sessionId }) => {
+      console.log(`Setting active terminal to session: ${sessionId}, terminalID: ${terminalID}`);
+      // 更新全局的 lastTerminalID 为当前活跃的终端ID
+      setActiveTerminalID(terminalID);
     });
 
     socket.on("disconnect", function () {
