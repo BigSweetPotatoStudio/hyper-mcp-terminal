@@ -2,6 +2,17 @@
 
 一个基于 MCP (Model Context Protocol) 的 Electron 桌面终端应用，为 AI 助手提供安全的终端执行能力。
 
+```
+    "terminal": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:3000/mcp"
+      ]
+    }
+```
+
+
 ## 项目概述
 
 Hyper MCP Terminal 是一个现代化的桌面终端应用，集成了 MCP 协议支持，使 AI 助手能够安全地执行命令行操作。应用基于 Electron + TypeScript 构建，提供多标签页终端界面和实时通信能力。
