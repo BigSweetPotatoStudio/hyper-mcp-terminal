@@ -7,6 +7,100 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 
 import { fileURLToPath } from "url";
 import os from "os";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+
+// 查找占用端口的进程ID
+async function findProcessUsingPort(port: number): Promise<string | null> {
+  try {
+    let command: string;
+    
+    if (os.platform() === "win32") {
+      // Windows: 使用netstat
+      command = `netstat -ano | findstr :${port}`;
+    } else {
+      // Linux/macOS: 使用lsof
+      command = `lsof -ti:${port}`;
+    }
+    
+    const { stdout } = await execAsync(command);
+    
+    if (os.platform() === "win32") {
+      // Windows netstat 输出格式: TCP 0.0.0.0:13000 0.0.0.0:0 LISTENING 1234
+      const lines = stdout.trim().split('\n');
+      for (const line of lines) {
+        if (line.includes('LISTENING')) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+          if (pid && !isNaN(parseInt(pid))) {
+            return pid;
+          }
+        }
+      }
+    } else {
+      // Linux/macOS lsof 直接返回PID
+      const pid = stdout.trim();
+      if (pid && !isNaN(parseInt(pid))) {
+        return pid;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.log(`未找到占用端口 ${port} 的进程`);
+    return null;
+  }
+}
+
+// 终止进程
+async function killProcess(pid: string): Promise<boolean> {
+  try {
+    let command: string;
+    
+    if (os.platform() === "win32") {
+      command = `taskkill /F /PID ${pid}`;
+    } else {
+      command = `kill -9 ${pid}`;
+    }
+    
+    await execAsync(command);
+    console.log(`已终止进程 PID: ${pid}`);
+    return true;
+  } catch (error) {
+    console.error(`终止进程失败 PID: ${pid}`, error);
+    return false;
+  }
+}
+
+// 结束占用端口的进程并重新启动服务器
+export async function killPortProcessAndRestart(port: number): Promise<boolean> {
+  try {
+    console.log(`查找占用端口 ${port} 的进程...`);
+    const pid = await findProcessUsingPort(port);
+    
+    if (!pid) {
+      console.log(`端口 ${port} 未被占用`);
+      return true;
+    }
+    
+    console.log(`发现占用端口 ${port} 的进程 PID: ${pid}`);
+    const killed = await killProcess(pid);
+    
+    if (killed) {
+      // 等待进程完全终止
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`已成功终止占用端口 ${port} 的进程`);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error(`处理端口 ${port} 占用进程时出错:`, error);
+    return false;
+  }
+}
 
 
 // 导入 MCP 服务器实例和终端创建函数
@@ -147,17 +241,17 @@ export async function startServer(tryAlternativePort: boolean = false) {
     let PORT = serverSettings.port;
 
     // 如果允许尝试其他端口，先检查原端口是否可用
-    if (tryAlternativePort) {
-      try {
-        PORT = await findAvailablePort(PORT);
-        if (PORT !== serverSettings.port) {
-          console.log(`原端口 ${serverSettings.port} 被占用，改为使用端口 ${PORT}`);
-        }
-      } catch (error) {
-        reject(new Error(`无法找到可用端口：${error instanceof Error ? error.message : String(error)}`));
-        return;
-      }
-    }
+    // if (tryAlternativePort) {
+    //   try {
+    //     PORT = await findAvailablePort(PORT);
+    //     if (PORT !== serverSettings.port) {
+    //       console.log(`原端口 ${serverSettings.port} 被占用，改为使用端口 ${PORT}`);
+    //     }
+    //   } catch (error) {
+    //     reject(new Error(`无法找到可用端口：${error instanceof Error ? error.message : String(error)}`));
+    //     return;
+    //   }
+    // }
 
     httpServer.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
