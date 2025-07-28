@@ -24,7 +24,7 @@ dayjs.locale("zh-cn");
 
 // Electron 环境检测和 socket 连接配置
 const isElectron = !!(window as any).electronAPI;
-const socketUrl = isElectron ? 'http://localhost:3000' : document.location.origin;
+const socketUrl = isElectron ? 'http://localhost:13000' : document.location.origin;
 // 错误边界组件
 interface ErrorBoundaryState {
   hasError: boolean;
