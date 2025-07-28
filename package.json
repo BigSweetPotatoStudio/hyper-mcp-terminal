@@ -4,7 +4,10 @@
   "description": "Hello World!",
   "main": "dist/electron/main.js",
   "type": "module",
-  "author": "Jane Doe",
+  "author": {
+    "name": "Dadigua",
+    "email": "0laopo0@gmail.com"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -70,24 +73,114 @@
     "zod": "^3.24.2"
   },
   "build": {
-    "appId": "com.bigsweet.hyper-mcp-terminal",
-    "productName": "Hyper MCP Terminal",
+    "appId": "men.dadigua.hpyerchat",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "copyright": "Copyright © 2024 ${author}",
     "directories": {
-      "output": "dist-electron"
+      "output": "electron-dist"
     },
+    "extraFiles": [],
+    "extraResources": [],
     "files": [
-      "build/**/*",
-      "dist/electron/**/*",
-      "node_modules/**/*"
+      "dist/**",
+      "!src/**",
+      "!*.mts",
+      "!python/**",
+      "!tmp/**",
+      "!tests/**",
+      "!web/**",
+      "!lib/**",
+      "!README.md",
+      "!ldh.todo",
+      "!depend",
+      "!tsconfig.json",
+      "!webpack.config.js"
     ],
-    "mac": {
-      "category": "public.app-category.developer-tools"
-    },
-    "win": {
-      "target": "nsis"
-    },
+    "icon": "./dist/core/web-build/icons/icon_512x512.png",
     "linux": {
-      "target": "AppImage"
+      "target": [
+        {
+          "arch": [
+            "x64",
+            "arm64"
+          ],
+          "target": "AppImage"
+        },
+        {
+          "arch": [
+            "x64",
+            "arm64"
+          ],
+          "target": "deb"
+        },
+        {
+          "arch": [
+            "x64",
+            "arm64"
+          ],
+          "target": "tar.gz"
+        }
+      ]
+    },
+    "mac": {
+      "entitlements": "build/mac/entitlements.mac.plist",
+      "entitlementsInherit": "build/mac/entitlements.mac.plist",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Please give us access to your camera",
+        "NSMicrophoneUsageDescription": "Please give us access to your microphone",
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.device.camera": true
+      },
+      "notarize": false,
+      "target": [
+        {
+          "arch": [
+            "arm64"
+          ],
+          "target": "dmg"
+        },
+        {
+          "arch": [
+            "arm64"
+          ],
+          "target": "zip"
+        }
+      ]
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "oneClick": false,
+      "perMachine": true,
+      "shortcutName": "hyper-mcp-terminal"
+    },
+    "productName": "hyper-mcp-terminal",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "BigSweetPotatoStudio",
+        "repo": "hyper-mcp-terminal",
+        "releaseType": "prerelease"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "arch": [
+            "x64"
+          ],
+          "target": "nsis"
+        },
+        {
+          "arch": [
+            "x64"
+          ],
+          "target": "zip"
+        }
+      ]
     }
   }
 }

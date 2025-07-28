@@ -4,3 +4,5 @@ lib/
 build/
 tests/
 *.log
+dist-electron/
+electron-dist/
