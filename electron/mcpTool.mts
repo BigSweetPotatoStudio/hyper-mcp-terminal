@@ -55,9 +55,14 @@ const promptPatterns = [
   // Windows 命令行
   /[A-Z]:\\.*>\s*$/,                    // C:\path> 格式  
   /PS\s+[A-Z]:\\.*>\s*$/,               // PowerShell PS C:\path>
+  /\([^)]+\)\s*PS\s+[A-Z]:\\.*>\s*$/,   // conda环境 (base) PS C:\path>
+  /\([^)]+\)\s*[A-Z]:\\.*>\s*$/,        // conda环境 (base) C:\path>
   
   // Fish shell
   /\w+@\w+.*>\s*$/,                     // user@host path>
+  
+  // Conda environments (跨平台)
+  /\([^)]+\).*[\$#>]\s*$/,              // (env_name) 前缀的提示符
   
   // 通用模式 - 更宽松的匹配
   /.*[\$#>]\s*$/,                       // 以 $, #, > 结尾

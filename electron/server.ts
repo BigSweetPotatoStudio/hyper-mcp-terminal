@@ -115,21 +115,88 @@ app.post("/mcp", async (req, res) => {
 
 
 
+// 检查端口是否可用的辅助函数
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const testServer = createServer();
+    testServer.listen(port, () => {
+      testServer.close(() => resolve(true));
+    }).on('error', () => resolve(false));
+  });
+}
+
+// 查找可用端口的函数
+async function findAvailablePort(startPort: number, maxAttempts: number = 10): Promise<number> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const port = startPort + i;
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+  throw new Error(`无法找到可用端口（尝试了 ${startPort} 到 ${startPort + maxAttempts - 1}）`);
+}
+
 // 导出启动服务器的函数
-export async function startServer() {
-  return new Promise<void>((resolve, reject) => {
+export async function startServer(tryAlternativePort: boolean = false) {
+  return new Promise<void>(async (resolve, reject) => {
     // 从应用数据获取端口设置
     const serverSettings = appDataManager.getSetting('server');
-    const PORT = serverSettings.port;
+    let PORT = serverSettings.port;
+
+    // 如果允许尝试其他端口，先检查原端口是否可用
+    if (tryAlternativePort) {
+      try {
+        PORT = await findAvailablePort(PORT);
+        if (PORT !== serverSettings.port) {
+          console.log(`原端口 ${serverSettings.port} 被占用，改为使用端口 ${PORT}`);
+        }
+      } catch (error) {
+        reject(new Error(`无法找到可用端口：${error instanceof Error ? error.message : String(error)}`));
+        return;
+      }
+    }
 
     httpServer.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`MCP HTTP endpoint: http://localhost:${PORT}/mcp`);
       resolve();
-    }).on('error', (error) => {
+    }).on('error', (error: any) => {
       console.error('服务器启动失败:', error);
+      
+      // 增强错误信息
+      if (error.code === 'EADDRINUSE') {
+        error.message = `端口 ${PORT} 已被其他程序占用`;
+      }
+      
       reject(error);
     });
+  });
+}
+
+// 导出停止服务器的函数
+export async function stopServer() {
+  return new Promise<void>((resolve) => {
+    if (httpServer.listening) {
+      console.log('正在关闭服务器...');
+      
+      // 关闭所有socket连接
+      io.disconnectSockets(true);
+      
+      // 清理所有终端会话
+      for (const [terminalID, context] of globalTerminalMap) {
+        context.terminal.kill();
+        globalTerminalMap.delete(terminalID);
+      }
+      socketSessionMap.clear();
+      
+      // 关闭HTTP服务器
+      httpServer.close(() => {
+        console.log('服务器已关闭');
+        resolve();
+      });
+    } else {
+      resolve();
+    }
   });
 }
 
