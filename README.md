@@ -171,13 +171,30 @@ xcode-select --install
 sudo apt-get install build-essential
 ```
 
-### Electron 版本兼容性
+### Electron 原生模块兼容性
 
-如果遇到原生模块版本问题，请重新构建：
+node-pty 是一个原生模块，需要为 Electron 的 Node.js 版本重新编译。
 
+**开发环境解决方案：**
 ```bash
-npm rebuild
+# 方法1：使用electron-rebuild
+npm run rebuild
+
+# 方法2：重新安装node-pty
+npm uninstall node-pty && npm install node-pty
+
+# 方法3：手动重建
+npx electron-rebuild
 ```
+
+**生产环境解决方案：**
+- 使用 `electron-builder` 打包时会自动处理原生模块重建
+- 确保在目标平台上构建应用
+
+**注意事项：**
+- 开发时的 node-pty 版本问题不影响应用的核心功能（设置管理、窗口状态等）
+- 终端功能需要 node-pty 正常工作
+- 如果无法解决 node-pty 问题，可以考虑使用其他终端实现
 
 ## 使用截图
 
