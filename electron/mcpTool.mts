@@ -11,6 +11,28 @@ import * as pty from "node-pty";
 import pack from "../package.json" assert { type: "json" };
 import { appDataManager } from "./app-data.js";
 
+// 安全获取用户主目录
+const getSafeHomeDir = (): string => {
+  try {
+    // 优先使用 Electron 的 app.getPath
+    if (process.versions?.electron) {
+      const { app } = require('electron');
+      return app.getPath('home');
+    }
+  } catch (error) {
+    // Electron 不可用时的备用逻辑
+  }
+  
+  // 备用方案：使用 os.homedir() 或 process.cwd()
+  const homeDir = os.homedir();
+  if (homeDir && homeDir !== '/') {
+    return homeDir;
+  }
+  
+  // 最后备用方案
+  return process.cwd();
+};
+
 // Windows shell 配置
 const getShellConfig = () => {
   if (os.platform() === "win32") {
@@ -100,33 +122,20 @@ function checkEndByPrompt(output: string): boolean {
   // 使用 strip-ansi 清理 ANSI 转义序列
   const cleanLine = strip(lastLine).trim();
 
-  console.log(`[DEBUG] Checking prompt detection:`);
-  console.log(`[DEBUG] Raw last line: "${lastLine}"`);
-  console.log(`[DEBUG] Clean last line: "${cleanLine}"`);
-  console.log(`[DEBUG] Line length: ${cleanLine.length}`);
 
   // 如果最后一行为空，检查倒数第二行
   let lineToCheck = cleanLine;
   if (!cleanLine && lines.length > 1) {
     const secondLastLine = lines[lines.length - 2] || '';
     lineToCheck = strip(secondLastLine).trim();
-    console.log(`[DEBUG] Using second last line: "${lineToCheck}"`);
   }
 
   // 检查是否匹配提示符模式
   const isPrompt = promptPatterns.some((pattern, index) => {
     const match = pattern.test(lineToCheck);
-    if (match) {
-      console.log(`[DEBUG] Matched pattern ${index}: ${pattern}`);
-    }
     return match;
   });
 
-  if (isPrompt) {
-    console.log(`[DEBUG] ✅ Command ended - detected prompt: "${lineToCheck}"`);
-  } else {
-    console.log(`[DEBUG] ❌ No prompt pattern matched for: "${lineToCheck}"`);
-  }
 
   return isPrompt;
 }
@@ -140,7 +149,7 @@ export function createTerminalSession(): number {
     name: "xterm-color",
     cols: 80,
     rows: 30,
-    cwd: process.env.HOME || process.cwd(),
+    cwd: getSafeHomeDir(),
     env: process.env,
     // Windows特殊配置
     ...(os.platform() === "win32" ? {
