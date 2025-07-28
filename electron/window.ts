@@ -1,7 +1,12 @@
 // 共享的窗口创建逻辑
 import { BrowserWindow, shell, ipcMain, app } from 'electron';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { appDataManager, AppSettings } from './app-data.js';
+
+// 为 ES 模块创建 __dirname 等效物
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 设置 IPC 处理程序
 export function setupIPC() {
