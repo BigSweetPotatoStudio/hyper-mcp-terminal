@@ -101,16 +101,47 @@ hyper-mcp-terminal/
 
 ## 配置说明
 
-### 环境变量
+### 应用设置
+
+应用设置自动保存在系统的应用数据目录中：
+- **macOS**: `~/Library/Application Support/hyper-mcp-terminal/`
+- **Windows**: `%APPDATA%/hyper-mcp-terminal/`
+- **Linux**: `~/.config/hyper-mcp-terminal/`
+
+#### 默认设置
+
+```json
+{
+  "server": {
+    "port": 3000
+  },
+  "terminal": {
+    "maxOutputTokens": 10000,
+    "endCheckCount": 15,
+    "timeout": 300000
+  },
+  "window": {
+    "width": 1200,
+    "height": 800,
+    "maximized": false
+  }
+}
+```
+
+#### 环境变量
 
 - `NODE_ENV`: 运行环境 (development/production)
-- `Terminal_End_CheckCount`: 终端结束检测次数（默认 15）
-- `Terminal_Output_MaxToken`: 终端输出最大长度（默认 10000）
-- `Terminal_Timeout`: 终端超时时间（默认 5 分钟）
+
+### 设置管理
+
+- **自动保存**: 所有设置更改自动保存到本地
+- **窗口记忆**: 应用会记住窗口位置、大小和最大化状态
+- **IPC 接口**: 支持通过 IPC 调用动态修改设置
+- **默认值回退**: 无效设置自动回退到默认值
 
 ### 端口配置
 
-- Web 服务器默认端口: 3000
+- Web 服务器端口可通过应用设置修改，默认: 3000
 - MCP 服务器使用 stdio 传输
 
 ## 安全特性

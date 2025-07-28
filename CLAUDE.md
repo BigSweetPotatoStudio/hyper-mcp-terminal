@@ -81,16 +81,26 @@ npm run electron:pack
 
 ## 配置说明
 
-### 环境变量
+### 应用设置系统
+
+使用 Electron 标准的应用数据存储机制，设置自动保存在系统应用数据目录：
+- **macOS**: `~/Library/Application Support/hyper-mcp-terminal/`
+- **Windows**: `%APPDATA%/hyper-mcp-terminal/`  
+- **Linux**: `~/.config/hyper-mcp-terminal/`
+
+#### 设置类别
+
+- **server**: 服务器相关配置（端口等）
+- **terminal**: 终端相关配置（输出长度、检测次数等）
+- **window**: 窗口相关配置（尺寸、位置、最大化状态）
+
+#### 环境变量
 
 - `NODE_ENV`: 运行环境 (development/production)
-- `Terminal_End_CheckCount`: 终端结束检测次数（默认 15）
-- `Terminal_Output_MaxToken`: 终端输出最大长度（默认 10000）
-- `Terminal_Timeout`: 终端超时时间（默认 5 分钟）
 
 ### 端口配置
 
-- Web 服务器默认端口: 3000
+- Web 服务器端口通过应用设置管理，默认: 3000
 - MCP 服务器使用 stdio 传输
 
 ## 安全特性
