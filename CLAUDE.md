@@ -1,3 +1,5 @@
+# 使用中文
+
 # Hyper MCP Terminal
 
 一个基于 MCP (Model Context Protocol) 的 Electron 桌面终端应用，为 AI 助手提供安全的终端执行能力。

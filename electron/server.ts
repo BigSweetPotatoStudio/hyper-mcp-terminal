@@ -7,7 +7,7 @@ import { appDataManager } from "./app-data.js";
 import { fileURLToPath } from "url";
 import os from "os";
 // 导入 MCP 服务器实例和终端创建函数
-import { createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./index.mjs";
+import { createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./mcpTool.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
