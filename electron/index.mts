@@ -3,16 +3,18 @@ import { z } from "zod";
 
 import {
   McpServer,
-  ResourceTemplate,
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import os from "os";
-import fs from "fs";
-import uuid from "uuid";
-import { execSync } from "child_process";
 import strip from "strip-ansi";
 import * as pty from "node-pty";
-import pack from "../package.json" assert { type: "json" };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const pack = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
 import { appDataManager } from "./app-data.js";
 
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";

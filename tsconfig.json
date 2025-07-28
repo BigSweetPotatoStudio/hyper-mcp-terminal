@@ -13,7 +13,7 @@
         "sourceMap": true,
         "strict": true,
         "strictNullChecks": true,
-        "outDir": "./dist",
+        "outDir": "./dist/electron",
         "lib": [
             "ESNext",
             "DOM"
