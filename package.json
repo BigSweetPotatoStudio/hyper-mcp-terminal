@@ -83,7 +83,11 @@
     "extraFiles": [],
     "extraResources": [],
     "files": [
-      "dist/**",
+      "dist/**/*",
+      "build/**/*",
+      "package.json",
+      "node_modules/**/*",
+      "frontend/logo.png",
       "!src/**",
       "!*.mts",
       "!python/**",
@@ -95,9 +99,11 @@
       "!ldh.todo",
       "!depend",
       "!tsconfig.json",
-      "!webpack.config.js"
+      "!webpack.config.js",
+      "!electron/**",
+      "!frontend/**"
     ],
-    "icon": "./dist/core/web-build/icons/icon_512x512.png",
+    "icon": "frontend/logo.png",
     "linux": {
       "target": [
         {
