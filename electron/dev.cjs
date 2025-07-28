@@ -1,7 +1,7 @@
 // Electron 开发环境启动脚本
 const { spawn } = require('child_process');
 const { app, BrowserWindow } = require('electron');
-const path = require('path');
+const { setupIPC, createMainWindow, setupSecurity } = require('./window.cjs');
 
 let mainWindow;
 let serverProcess;
@@ -46,31 +46,18 @@ function startDevServer() {
   });
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'electron/preload.cjs')
-    }
-  });
-
-  mainWindow.loadURL('http://localhost:3000');
-  mainWindow.webContents.openDevTools();
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-}
-
 app.whenReady().then(async () => {
+  // 设置 IPC 处理程序
+  setupIPC();
+  
+  // 设置安全策略
+  setupSecurity();
+
   try {
     console.log('启动开发服务器...');
     await startDevServer();
     console.log('服务器启动成功，创建窗口...');
-    createWindow();
+    mainWindow = createMainWindow(true); // 开发模式
   } catch (error) {
     console.error('启动失败:', error);
     app.quit();

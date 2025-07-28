@@ -22,7 +22,7 @@
     "restart": "pm2 stop terminal && npm start",
     "prepublishOnly": "npm run build",
     "electron": "electron .",
-    "electron:dev": "electron electron.dev.cjs",
+    "electron:dev": "electron electron/dev.cjs",
     "electron:build": "npm run build && npm run build:web && electron-builder",
     "electron:pack": "electron-builder --dir"
   },
