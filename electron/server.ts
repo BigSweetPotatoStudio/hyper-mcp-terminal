@@ -173,6 +173,12 @@ io.on("connect", (socket) => {
       context.terminal.write(data);
     });
 
+    // 监听终端尺寸变化事件
+    socket.on("resize", ({ cols, rows }) => {
+      console.log(`Resizing terminal ${terminalID} to ${cols}x${rows}`);
+      context.terminal.resize(cols, rows);
+    });
+
     // 监听活跃终端切换事件
     socket.on("set-active-terminal", ({ sessionId }) => {
       console.log(`Setting active terminal to session: ${sessionId}, terminalID: ${terminalID}`);

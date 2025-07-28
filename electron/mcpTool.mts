@@ -66,19 +66,26 @@ const promptPatterns = [
   /\w+@\w+.*[\$#]\s*$/,                 // user@host:path$ 格式
   /➜.*[\$#]\s*$/,                       // zsh arrow prompt
   /.*:.*[\$#]\s*$/,                     // path:$ 格式
-  
+
   // Windows 命令行
   /[A-Z]:\\.*>\s*$/,                    // C:\path> 格式  
+  
+  // PowerShell 提示符（各种格式）
   /PS\s+[A-Z]:\\.*>\s*$/,               // PowerShell PS C:\path>
+  /PS\s+[A-Z]:[^>]*>\s*$/,              // PowerShell PS C:\Users\username>
+  /PS\s+[A-Za-z]:[\\\/][^>]*>\s*$/,     // PowerShell PS C:\path 或 PS c:/path>
+  /PS\s+.*>\s*$/,                       // 任何包含 PS 的格式
+  
+  // Conda 环境
   /\([^)]+\)\s*PS\s+[A-Z]:\\.*>\s*$/,   // conda环境 (base) PS C:\path>
   /\([^)]+\)\s*[A-Z]:\\.*>\s*$/,        // conda环境 (base) C:\path>
-  
+
   // Fish shell
   /\w+@\w+.*>\s*$/,                     // user@host path>
-  
+
   // Conda environments (跨平台)
   /\([^)]+\).*[\$#>]\s*$/,              // (env_name) 前缀的提示符
-  
+
   // 通用模式 - 更宽松的匹配
   /.*[\$#>]\s*$/,                       // 以 $, #, > 结尾
   /.*[:\]]\s*[\$#>]\s*$/,               // 带路径分隔符的提示符
@@ -86,20 +93,41 @@ const promptPatterns = [
 
 function checkEndByPrompt(output: string): boolean {
   if (!output.trim()) return false;
-  
+
   const lines = output.split('\n');
   const lastLine = lines[lines.length - 1] || '';
-  
-  // 移除ANSI颜色代码和控制字符
-  const cleanLine = lastLine.replace(/\x1b\[[0-9;]*[mGKH]/g, '').trim();
-  
-  // 检查最后一行是否匹配提示符模式
-  const isPrompt = promptPatterns.some(pattern => pattern.test(cleanLine));
-  
-  if (isPrompt) {
-    console.log(`Command ended - detected prompt: "${cleanLine}"`);
+
+  // 使用 strip-ansi 清理 ANSI 转义序列
+  const cleanLine = strip(lastLine).trim();
+
+  console.log(`[DEBUG] Checking prompt detection:`);
+  console.log(`[DEBUG] Raw last line: "${lastLine}"`);
+  console.log(`[DEBUG] Clean last line: "${cleanLine}"`);
+  console.log(`[DEBUG] Line length: ${cleanLine.length}`);
+
+  // 如果最后一行为空，检查倒数第二行
+  let lineToCheck = cleanLine;
+  if (!cleanLine && lines.length > 1) {
+    const secondLastLine = lines[lines.length - 2] || '';
+    lineToCheck = strip(secondLastLine).trim();
+    console.log(`[DEBUG] Using second last line: "${lineToCheck}"`);
   }
-  
+
+  // 检查是否匹配提示符模式
+  const isPrompt = promptPatterns.some((pattern, index) => {
+    const match = pattern.test(lineToCheck);
+    if (match) {
+      console.log(`[DEBUG] Matched pattern ${index}: ${pattern}`);
+    }
+    return match;
+  });
+
+  if (isPrompt) {
+    console.log(`[DEBUG] ✅ Command ended - detected prompt: "${lineToCheck}"`);
+  } else {
+    console.log(`[DEBUG] ❌ No prompt pattern matched for: "${lineToCheck}"`);
+  }
+
   return isPrompt;
 }
 
@@ -107,7 +135,7 @@ function checkEndByPrompt(output: string): boolean {
 export function createTerminalSession(): number {
   const terminalID = ++globalLastTerminalID;
   lastTerminalID = globalLastTerminalID;
-  
+
   const terminal = pty.spawn(shell, shellArgs, {
     name: "xterm-color",
     cols: 80,
@@ -136,7 +164,7 @@ export function createTerminalSession(): number {
 
   globalTerminalMap.set(terminalID, context);
   console.log(`Terminal session created with ID: ${terminalID}`);
-  
+
   return terminalID;
 }
 
@@ -153,13 +181,13 @@ server.tool(
     // 自动使用最近活跃的终端
     const terminalID = lastTerminalID;
     let c = terminalMap.get(terminalID);
-    
+
     if (c == null) {
       throw new Error("No active terminal found. Please open a terminal first using the web interface at http://localhost:13000");
     }
-    
-    console.log(`Executing command: "${command}" on active terminal ${terminalID}`);
-    
+
+
+
     const startTime = Date.now();
     c.commandOutput = "";
     c.terminal.write(`${command}\r`);
@@ -167,18 +195,18 @@ server.tool(
     // 使用基于提示符的检测，无超时限制
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      
+
       if (checkEndByPrompt(c.commandOutput)) {
         const duration = Date.now() - startTime;
         console.log(`Command "${command}" completed in ${duration}ms`);
         break;
       }
     }
-    
+
     c.lastIndex = c.stdout.length;
     const terminalConfig = getTerminalConfig();
     const result = strip(c.commandOutput).slice(-terminalConfig.maxOutputTokens);
-    
+    console.log(`Executing command: "${command}" on active terminal ${terminalID}`);
     return {
       content: [
         { type: "text", text: result },

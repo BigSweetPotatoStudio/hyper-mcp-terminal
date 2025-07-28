@@ -134,6 +134,11 @@ const App = () => {
       socket.emit("shell", data);
     });
 
+    // 监听终端尺寸变化
+    terminal.onResize((size) => {
+      socket.emit("resize", { cols: size.cols, rows: size.rows });
+    });
+
     // 设置Socket事件监听
     socket.on("connect", () => {
       console.log(`Session ${sessionId} connected`);
