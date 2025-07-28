@@ -10,19 +10,13 @@
     "type": "git",
     "url": "git+https://github.com/BigSweetPotatoStudio/hyper-mcp-terminal"
   },
-  "bin": {
-    "hyper-mcp-terminal": "dist/index.mjs"
-  },
   "scripts": {
-    "dev": "nodemon --watch src -e ts,tsx --exec tsx src/server.ts",
+    "dev": "nodemon --watch electron -e ts,tsx --exec tsx electron/server.ts",
     "build": "npx tsc",
     "build:web": "npx webpack --mode production",
     "dev:web": "npx webpack -w",
-    "start": "pm2 start lib/server.js --name terminal",
-    "restart": "pm2 stop terminal && npm start",
-    "prepublishOnly": "npm run build",
     "electron": "electron .",
-    "electron:dev": "electron dist/electron/main.js",
+    "electron:dev": "npm run dev",
     "electron:build": "npm run build && npm run build:web && electron-builder",
     "electron:pack": "electron-builder --dir"
   },
@@ -84,7 +78,6 @@
     "files": [
       "build/**/*",
       "dist/electron/**/*",
-      "dist/src/**/*",
       "node_modules/**/*"
     ],
     "mac": {
