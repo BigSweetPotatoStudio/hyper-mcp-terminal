@@ -1,30 +1,11 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
-const { setupIPC, createMainWindow, setupSecurity } = require('./window.cjs');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
+import { setupIPC, createMainWindow, setupSecurity } from './window.js';
+import { startServer } from './server.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 
-let mainWindow;
-let serverProcess;
-
-// 启动后端服务器
-function startServer() {
-  const serverScript = path.join(__dirname, 'server.cjs');
-  
-  serverProcess = spawn('node', [serverScript], {
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'production' }
-  });
-
-  serverProcess.on('error', (err) => {
-    console.error('服务器启动失败:', err);
-  });
-
-  serverProcess.on('exit', (code) => {
-    console.log(`服务器进程退出，代码: ${code}`);
-  });
-}
+let mainWindow: BrowserWindow | null = null;
 
 // 应用准备就绪时创建窗口
 app.whenReady().then(() => {
@@ -36,12 +17,13 @@ app.whenReady().then(() => {
 
   if (!isDev) {
     // 生产模式下启动服务器
-    startServer();
-    
-    // 等待服务器启动
-    setTimeout(() => {
+    startServer().then(() => {
+      console.log('服务器启动成功，创建窗口...');
       mainWindow = createMainWindow(false);
-    }, 2000);
+    }).catch((error) => {
+      console.error('服务器启动失败:', error);
+      app.quit();
+    });
   } else {
     mainWindow = createMainWindow(true);
   }
@@ -64,7 +46,5 @@ app.on('window-all-closed', () => {
 
 // 应用退出前清理
 app.on('before-quit', () => {
-  if (serverProcess) {
-    serverProcess.kill();
-  }
+  // 不再需要手动清理子进程，因为服务器在相同进程中运行
 });

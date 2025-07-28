@@ -1,9 +1,9 @@
 // 共享的窗口创建逻辑
-const { BrowserWindow, shell, ipcMain, app } = require('electron');
-const path = require('path');
+import { BrowserWindow, shell, ipcMain, app } from 'electron';
+import path from 'path';
 
 // 设置 IPC 处理程序
-function setupIPC() {
+export function setupIPC() {
   ipcMain.handle('app-version', () => {
     return app.getVersion();
   });
@@ -14,7 +14,7 @@ function setupIPC() {
 }
 
 // 创建主窗口
-function createMainWindow(isDev = false) {
+export function createMainWindow(isDev: boolean = false): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -23,9 +23,8 @@ function createMainWindow(isDev = false) {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
       webSecurity: true,
-      preload: path.join(__dirname, 'preload.cjs')
+      preload: path.join(__dirname, 'preload.js') // 编译后是.js文件
     },
     icon: path.join(__dirname, '../assets/icon.png'),
     titleBarStyle: 'default',
@@ -78,19 +77,14 @@ function createMainWindow(isDev = false) {
 }
 
 // 安全设置
-function setupSecurity() {
+export function setupSecurity() {
   // 防止新窗口创建  
   app.on('web-contents-created', (_event, contents) => {
-    contents.on('new-window', (event, navigationUrl) => {
-      // 阻止创建新窗口
-      event.preventDefault();
-      shell.openExternal(navigationUrl);
+    contents.setWindowOpenHandler(({ url }) => {
+      // 使用外部浏览器打开链接
+      shell.openExternal(url);
+      return { action: 'deny' };
     });
   });
 }
 
-module.exports = {
-  setupIPC,
-  createMainWindow,
-  setupSecurity
-};

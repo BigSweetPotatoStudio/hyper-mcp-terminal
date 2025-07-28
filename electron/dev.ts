@@ -1,13 +1,13 @@
 // Electron 开发环境启动脚本
-const { spawn } = require('child_process');
-const { app, BrowserWindow } = require('electron');
-const { setupIPC, createMainWindow, setupSecurity } = require('./window.cjs');
+import { spawn, ChildProcess } from 'child_process';
+import { app, BrowserWindow } from 'electron';
+import { setupIPC, createMainWindow, setupSecurity } from './window.js';
 
-let mainWindow;
-let serverProcess;
+let mainWindow: BrowserWindow | null = null;
+let serverProcess: ChildProcess | null = null;
 
 // 等待服务器启动
-function waitForServer(url, timeout = 30000) {
+function waitForServer(url: string, timeout = 30000): Promise<void> {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     const check = () => {
@@ -28,7 +28,7 @@ function waitForServer(url, timeout = 30000) {
 }
 
 // 启动开发服务器
-function startDevServer() {
+function startDevServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     serverProcess = spawn('npm', ['run', 'dev'], {
       stdio: 'inherit',
@@ -40,7 +40,7 @@ function startDevServer() {
     // 等待服务器启动
     setTimeout(() => {
       waitForServer('http://localhost:3000')
-        .then(resolve)
+        .then(() => resolve())
         .catch(reject);
     }, 3000);
   });
