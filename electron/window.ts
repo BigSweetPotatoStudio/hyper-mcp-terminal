@@ -1,9 +1,11 @@
 // 共享的窗口创建逻辑
 import { BrowserWindow, shell, ipcMain, app } from 'electron';
 import path from 'path';
+import { appDataManager, AppSettings } from './app-data';
 
 // 设置 IPC 处理程序
 export function setupIPC() {
+  // 基本应用信息
   ipcMain.handle('app-version', () => {
     return app.getVersion();
   });
@@ -11,13 +13,52 @@ export function setupIPC() {
   ipcMain.handle('app-name', () => {
     return app.getName();
   });
+
+  // 应用设置相关 IPC
+  ipcMain.handle('get-app-settings', () => {
+    return appDataManager.getSettings();
+  });
+
+  ipcMain.handle('get-app-setting', (event, key: keyof AppSettings) => {
+    return appDataManager.getSetting(key);
+  });
+
+  ipcMain.handle('set-app-setting', (event, key: keyof AppSettings, value: any) => {
+    appDataManager.setSetting(key, value);
+    return true;
+  });
+
+  ipcMain.handle('set-nested-app-setting', (event, category: keyof AppSettings, key: string, value: any) => {
+    // 使用类型断言来处理嵌套设置
+    (appDataManager as any).setNestedSetting(category, key, value);
+    return true;
+  });
+
+  ipcMain.handle('reset-app-settings', () => {
+    appDataManager.resetSettings();
+    return true;
+  });
+
+  ipcMain.handle('reset-app-setting-category', (event, category: keyof AppSettings) => {
+    appDataManager.resetCategory(category);
+    return true;
+  });
+
+  ipcMain.handle('get-settings-path', () => {
+    return appDataManager.getSettingsPath();
+  });
 }
 
 // 创建主窗口
 export function createMainWindow(isDev: boolean = false): BrowserWindow {
+  // 从应用数据获取窗口设置
+  const windowSettings = appDataManager.getSetting('window');
+  
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: windowSettings.width,
+    height: windowSettings.height,
+    x: windowSettings.x,
+    y: windowSettings.y,
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
@@ -30,6 +71,11 @@ export function createMainWindow(isDev: boolean = false): BrowserWindow {
     titleBarStyle: 'default',
     show: false
   });
+
+  // 如果之前是最大化状态，则最大化窗口
+  if (windowSettings.maximized) {
+    mainWindow.maximize();
+  }
 
   // 设置窗口标题
   mainWindow.setTitle('Hyper MCP Terminal');
@@ -59,9 +105,37 @@ export function createMainWindow(isDev: boolean = false): BrowserWindow {
     return { action: 'deny' };
   });
 
+  // 保存窗口状态的函数
+  const saveWindowState = () => {
+    if (mainWindow.isDestroyed()) return;
+    
+    const bounds = mainWindow.getBounds();
+    const isMaximized = mainWindow.isMaximized();
+    
+    appDataManager.setSetting('window', {
+      ...windowSettings,
+      width: bounds.width,
+      height: bounds.height,
+      x: bounds.x,
+      y: bounds.y,
+      maximized: isMaximized,
+    });
+  };
+
+  // 监听窗口状态变化
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
+  mainWindow.on('maximize', saveWindowState);
+  mainWindow.on('unmaximize', saveWindowState);
+
   // 窗口关闭时的处理
   mainWindow.on('closed', () => {
     // 窗口已关闭，释放引用
+  });
+
+  // 应用退出前保存窗口状态
+  mainWindow.on('close', () => {
+    saveWindowState();
   });
 
   // 阻止导航到其他页面

@@ -13,6 +13,7 @@ import { execSync } from "child_process";
 import strip from "strip-ansi";
 import * as pty from "node-pty";
 import pack from "../package.json" assert { type: "json" };
+import { appDataManager } from "./app-data.js";
 
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 
@@ -43,8 +44,9 @@ export type Context = {
 const terminalMap = globalTerminalMap;
 let lastTerminalID = globalLastTerminalID;
 
-// 基于Shell提示符的结束检测
-const maxToken = parseInt(process.env.Terminal_Output_MaxToken || '10000');
+// 基于Shell提示符的结束检测  
+// 从应用数据获取终端配置
+const getTerminalConfig = () => appDataManager.getSetting('terminal');
 
 // 支持各种Shell的提示符模式
 const promptPatterns = [
@@ -151,7 +153,8 @@ server.tool(
     }
     
     c.lastIndex = c.stdout.length;
-    const result = strip(c.commandOutput).slice(-maxToken);
+    const terminalConfig = getTerminalConfig();
+    const result = strip(c.commandOutput).slice(-terminalConfig.maxOutputTokens);
     
     return {
       content: [

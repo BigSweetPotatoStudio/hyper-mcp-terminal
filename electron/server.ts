@@ -2,7 +2,7 @@
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
-// import { options } from "./commander.js";
+import { appDataManager } from "./app-data.js";
 
 import { fileURLToPath } from "url";
 import os from "os";
@@ -113,7 +113,10 @@ io.on("connect", (socket) => {
 // 导出启动服务器的函数
 export async function startServer() {
   return new Promise<void>((resolve, reject) => {
-    const PORT = 3000;
+    // 从应用数据获取端口设置
+    const serverSettings = appDataManager.getSetting('server');
+    const PORT = serverSettings.port;
+    
     httpServer.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`MCP HTTP endpoint: http://localhost:${PORT}/mcp`);
