@@ -3,11 +3,12 @@ import express from "express";
 import path from "path";
 import { Server } from "socket.io";
 import { appDataManager } from "./app-data.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 import { fileURLToPath } from "url";
 import os from "os";
 // 导入 MCP 服务器实例和终端创建函数
-import { createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./mcpTool.mjs";
+import { createTerminalSession, globalTerminalMap, server, setActiveTerminalID, type Context } from "./mcpTool.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
@@ -52,15 +53,15 @@ const socketSessionMap = new Map<string, number>();
 
 io.on("connect", (socket) => {
   console.log("Socket connected:", socket.id);
-  
+
   // 获取会话ID（从查询参数中）
   const sessionId = socket.handshake.query.sessionId as string || socket.id;
   console.log("Session ID:", sessionId);
-  
+
   // 创建新的终端会话（函数返回number类型的ID）
   const terminalID = createTerminalSession();
   const context = globalTerminalMap.get(terminalID);
-  
+
   // 记录socket和会话的映射关系
   socketSessionMap.set(socket.id, terminalID);
 
@@ -99,16 +100,20 @@ io.on("connect", (socket) => {
 
 
 
-// 添加 MCP HTTP 路由 - 暂时禁用，因为 SDK 版本不兼容
-// app.post("/mcp", async (req, res) => {
-//   try {
-//     // TODO: 更新到新的 MCP SDK API
-//     res.status(501).json({ error: "MCP HTTP endpoint not implemented" });
-//   } catch (error) {
-//     logger.error("MCP request error:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// });
+app.post("/mcp", async (req, res) => {
+  try {
+    const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    logger.error("MCP request error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 
 // 导出启动服务器的函数
 export async function startServer() {
@@ -116,7 +121,7 @@ export async function startServer() {
     // 从应用数据获取端口设置
     const serverSettings = appDataManager.getSetting('server');
     const PORT = serverSettings.port;
-    
+
     httpServer.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`MCP HTTP endpoint: http://localhost:${PORT}/mcp`);

@@ -129,6 +129,7 @@ server.tool(
     }),
   },
   async ({ command }) => {
+    console.log(`Received command: "${command}"`);
     // 自动使用最近活跃的终端
     const terminalID = lastTerminalID;
     let c = terminalMap.get(terminalID);

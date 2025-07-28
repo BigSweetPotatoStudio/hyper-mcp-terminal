@@ -14,7 +14,7 @@
     "build": "npx tsc",
     "build:web": "npx webpack --mode production",
     "dev:web": "npx webpack -w",
-    "electron": "electron .",
+    "dev:electron": "npm run build && electron .",
     "electron:build": "npm run build && npm run build:web && electron-builder",
     "electron:pack": "electron-builder --dir",
     "rebuild": "electron-rebuild"
