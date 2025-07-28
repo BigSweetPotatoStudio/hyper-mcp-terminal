@@ -43,22 +43,46 @@ export type Context = {
 const terminalMap = globalTerminalMap;
 let lastTerminalID = globalLastTerminalID;
 
-// const promptPattern = /\$\s*$|\>\s*$|#\s*$/m;
-const checkCount = parseInt(process.env.Terminal_End_CheckCount || '15');
+// 基于Shell提示符的结束检测
 const maxToken = parseInt(process.env.Terminal_Output_MaxToken || '10000');
-const arr: string[] = [];
-function checkEnd(str: string): boolean {
-  if (arr.length < checkCount) {
-    arr.push(str);
-    return false;
-  } else {
-    arr.shift();
-    arr.push(str);
-    if (arr.every((v) => v === str)) {
-      return true;
-    }
-    return false;
+
+// 支持各种Shell的提示符模式
+const promptPatterns = [
+  // Bash/Zsh 常见格式
+  /[\$#]\s*$/,                          // 简单的 $ 或 # 结尾
+  /\w+@\w+.*[\$#]\s*$/,                 // user@host:path$ 格式
+  /➜.*[\$#]\s*$/,                       // zsh arrow prompt
+  /.*:.*[\$#]\s*$/,                     // path:$ 格式
+  
+  // Windows 命令行
+  /[A-Z]:\\.*>\s*$/,                    // C:\path> 格式  
+  /PS\s+[A-Z]:\\.*>\s*$/,               // PowerShell PS C:\path>
+  
+  // Fish shell
+  /\w+@\w+.*>\s*$/,                     // user@host path>
+  
+  // 通用模式 - 更宽松的匹配
+  /.*[\$#>]\s*$/,                       // 以 $, #, > 结尾
+  /.*[:\]]\s*[\$#>]\s*$/,               // 带路径分隔符的提示符
+];
+
+function checkEndByPrompt(output: string): boolean {
+  if (!output.trim()) return false;
+  
+  const lines = output.split('\n');
+  const lastLine = lines[lines.length - 1] || '';
+  
+  // 移除ANSI颜色代码和控制字符
+  const cleanLine = lastLine.replace(/\x1b\[[0-9;]*[mGKH]/g, '').trim();
+  
+  // 检查最后一行是否匹配提示符模式
+  const isPrompt = promptPatterns.some(pattern => pattern.test(cleanLine));
+  
+  if (isPrompt) {
+    console.log(`Command ended - detected prompt: "${cleanLine}"`);
   }
+  
+  return isPrompt;
 }
 
 // 创建终端会话的函数，供 Web 界面调用
@@ -94,36 +118,44 @@ export function createTerminalSession(): number {
 
 server.tool(
   "execute-command",
-  `execute-command on terminal.`,
+  `Execute a command on the currently active terminal.`,
   {
-    terminalID: z.number({ description: "terminalID" }),
     command: z.string({
       description: "The command to execute",
     }),
   },
-  async ({ terminalID, command }) => {
-    if (terminalID === -1) {
-      terminalID = lastTerminalID;
-    }
+  async ({ command }) => {
+    // 自动使用最近活跃的终端
+    const terminalID = lastTerminalID;
     let c = terminalMap.get(terminalID);
+    
     if (c == null) {
-      throw new Error("Terminal not found. Please open a terminal first using the web interface at http://localhost:3000");
+      throw new Error("No active terminal found. Please open a terminal first using the web interface at http://localhost:3000");
     }
-    // logger.info(`execute-command: ${command}`);
-
+    
+    console.log(`Executing command: "${command}" on active terminal ${terminalID}`);
+    
+    const startTime = Date.now();
     c.commandOutput = "";
     c.terminal.write(`${command}\r`);
 
-    while (1) {
+    // 使用基于提示符的检测，无超时限制
+    while (true) {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      if (checkEnd(c.commandOutput)) {
+      
+      if (checkEndByPrompt(c.commandOutput)) {
+        const duration = Date.now() - startTime;
+        console.log(`Command "${command}" completed in ${duration}ms`);
         break;
       }
     }
+    
     c.lastIndex = c.stdout.length;
+    const result = strip(c.commandOutput).slice(-maxToken);
+    
     return {
       content: [
-        { type: "text", text: strip(c.commandOutput).slice(-maxToken) },
+        { type: "text", text: result },
       ],
     };
   }

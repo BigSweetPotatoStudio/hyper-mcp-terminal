@@ -12,8 +12,6 @@ command:  npx
 args:  -y hyper-mcp-terminal
 
 env:  
-    //(可选) 通过输出不变来判断是否结束 默认是 15次，检测间隔是100ms，也就是1.5s输出一直不变，表示命令结束了
-    Terminal_End_CheckCount || 15;
     //(可选) 终端输出最大长度给大模型的
     Terminal_Output_MaxToken || 10000 
 ```

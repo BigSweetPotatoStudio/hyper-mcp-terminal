@@ -71,7 +71,6 @@ npm restart
 
 ### 环境变量
 
-- `Terminal_End_CheckCount`: 终端结束检测次数（默认 15）
 - `Terminal_Output_MaxToken`: 终端输出最大长度（默认 10000）
 
 ### 端口配置
