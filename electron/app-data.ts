@@ -10,8 +10,6 @@ export interface AppSettings {
   };
   terminal: {
     maxOutputTokens: number;
-    endCheckCount: number;
-    timeout: number;
   };
   window: {
     width: number;
@@ -29,8 +27,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
   terminal: {
     maxOutputTokens: 10000,
-    endCheckCount: 15,
-    timeout: 300000, // 5分钟
   },
   window: {
     width: 1200,
