@@ -124,7 +124,7 @@ hyper-mcp-terminal/
 ```json
 {
   "server": {
-    "port": 3000
+    "port": 13000
   },
   "terminal": {
     "maxOutputTokens": 10000

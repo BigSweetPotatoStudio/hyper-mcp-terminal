@@ -49,7 +49,7 @@ export interface AppSettings {
 // 默认设置
 const DEFAULT_SETTINGS: AppSettings = {
   server: {
-    port: 3000,
+    port: 13000,
   },
   terminal: {
     maxOutputTokens: 10000,

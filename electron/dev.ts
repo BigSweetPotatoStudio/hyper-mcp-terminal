@@ -39,7 +39,7 @@ function startDevServer(): Promise<void> {
     
     // 等待服务器启动
     setTimeout(() => {
-      waitForServer('http://localhost:3000')
+      waitForServer('http://localhost:13000')
         .then(() => resolve())
         .catch(reject);
     }, 3000);

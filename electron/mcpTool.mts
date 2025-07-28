@@ -11,7 +11,22 @@ import * as pty from "node-pty";
 import pack from "../package.json" assert { type: "json" };
 import { appDataManager } from "./app-data.js";
 
-const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
+// Windows shell 配置
+const getShellConfig = () => {
+  if (os.platform() === "win32") {
+    return {
+      shell: "powershell.exe",
+      args: ["-NoLogo", "-NoProfile"]  // 减少PowerShell启动输出
+    };
+  }
+  return {
+    shell: "bash",
+    args: []
+  };
+};
+
+const { shell, args: shellArgs } = getShellConfig();
+
 
 // 全局终端映射，用于在 Web 界面和 MCP 之间共享终端会话
 export const globalTerminalMap = new Map<number, Context>();
@@ -93,12 +108,17 @@ export function createTerminalSession(): number {
   const terminalID = ++globalLastTerminalID;
   lastTerminalID = globalLastTerminalID;
   
-  const terminal = pty.spawn(shell, [], {
+  const terminal = pty.spawn(shell, shellArgs, {
     name: "xterm-color",
     cols: 80,
     rows: 30,
     cwd: process.env.HOME || process.cwd(),
     env: process.env,
+    // Windows特殊配置
+    ...(os.platform() === "win32" ? {
+      useConpty: true,  // 使用Windows ConPTY API
+      conptyInheritCursor: false
+    } : {})
   });
 
   const context: Context = {
@@ -109,8 +129,9 @@ export function createTerminalSession(): number {
   };
 
   terminal.onData((data) => {
-    context.stdout += data;
-    context.commandOutput += data;
+    const normalizedData = (data);
+    context.stdout += normalizedData;
+    context.commandOutput += normalizedData;
   });
 
   globalTerminalMap.set(terminalID, context);
@@ -134,7 +155,7 @@ server.tool(
     let c = terminalMap.get(terminalID);
     
     if (c == null) {
-      throw new Error("No active terminal found. Please open a terminal first using the web interface at http://localhost:3000");
+      throw new Error("No active terminal found. Please open a terminal first using the web interface at http://localhost:13000");
     }
     
     console.log(`Executing command: "${command}" on active terminal ${terminalID}`);

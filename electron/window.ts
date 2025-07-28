@@ -88,7 +88,7 @@ export function createMainWindow(isDev: boolean = false): BrowserWindow {
   // 加载应用
   if (isDev) {
     // 开发模式：连接到开发服务器
-    mainWindow.loadURL('http://localhost:3000');
+    mainWindow.loadURL('http://localhost:13000');
     mainWindow.webContents.openDevTools();
   } else {
     // 生产模式：加载本地文件
@@ -147,7 +147,7 @@ export function createMainWindow(isDev: boolean = false): BrowserWindow {
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
     
-    if (parsedUrl.origin !== 'http://localhost:3000' && parsedUrl.origin !== 'file://') {
+    if (parsedUrl.origin !== 'http://localhost:13000' && parsedUrl.origin !== 'file://') {
       event.preventDefault();
     }
   });

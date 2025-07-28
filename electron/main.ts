@@ -32,7 +32,7 @@ app.whenReady().then(() => {
         const response = await dialog.showMessageBox({
           type: 'warning',
           title: '端口被占用',
-          message: '端口被占用，无法启动服务器',
+          message: '13000 端口被占用，无法启动服务器',
           detail: `${error.message}\n\n是否尝试使用其他可用端口？`,
           buttons: ['尝试其他端口', '退出应用', '查看详情'],
           defaultId: 0,

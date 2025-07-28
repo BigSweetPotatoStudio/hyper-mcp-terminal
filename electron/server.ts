@@ -7,8 +7,10 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 
 import { fileURLToPath } from "url";
 import os from "os";
+
+
 // 导入 MCP 服务器实例和终端创建函数
-import { createTerminalSession, globalTerminalMap, server, setActiveTerminalID, type Context } from "./mcpTool.mjs";
+import { createTerminalSession, globalTerminalMap, server, setActiveTerminalID } from "./mcpTool.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
@@ -68,7 +70,8 @@ io.on("connect", (socket) => {
   if (context) {
     context.terminal.onData((data: string) => {
       // logger.info(data);
-      socket.emit("shell", data);
+      const normalizedData = (data);
+      socket.emit("shell", normalizedData);
     });
 
     socket.on("shell", (data) => {
