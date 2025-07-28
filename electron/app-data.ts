@@ -1,7 +1,33 @@
 // Electron 应用数据管理模块
-import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+
+// 获取应用数据目录的函数
+const getUserDataPath = (): string => {
+  // 尝试使用Electron的app.getPath
+  try {
+    if (process.versions?.electron) {
+      const { app } = require('electron');
+      return app.getPath('userData');
+    }
+  } catch (error) {
+    // Electron不可用，使用备用路径
+  }
+  
+  // 备用路径（用于开发环境）
+  const homeDir = os.homedir();
+  const appName = 'hyper-mcp-terminal';
+  
+  switch (process.platform) {
+    case 'win32':
+      return path.join(homeDir, 'AppData', 'Roaming', appName);
+    case 'darwin':
+      return path.join(homeDir, 'Library', 'Application Support', appName);
+    default:
+      return path.join(homeDir, '.config', appName);
+  }
+};
 
 // 应用设置接口定义
 export interface AppSettings {
@@ -43,7 +69,7 @@ class AppDataManager {
 
   constructor() {
     // 获取应用数据目录
-    const userDataPath = app.getPath('userData');
+    const userDataPath = getUserDataPath();
     this.settingsPath = path.join(userDataPath, 'settings.json');
     
     // 确保目录存在
