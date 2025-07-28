@@ -2,18 +2,18 @@
 import express from "express";
 import path from "path";
 import { Server } from "socket.io";
-import { options } from "./commander";
+// import { options } from "./commander.js";
 
 import { fileURLToPath } from "url";
 import os from "os";
 // 导入 MCP 服务器实例和终端创建函数
-import { server, createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./index.mjs";
+import { createTerminalSession, globalTerminalMap, setActiveTerminalID, type Context } from "./index.mjs";
 
 // 为 ES 模块创建 __dirname 等效物
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log(options);
+// console.log(options);
 
 // console.log(path.resolve(__dirname, '../build'));
 const app = express();

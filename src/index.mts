@@ -12,7 +12,7 @@ import uuid from "uuid";
 import { execSync } from "child_process";
 import strip from "strip-ansi";
 import * as pty from "node-pty";
-import pack from "../package.json";
+import pack from "../package.json" assert { type: "json" };
 
 const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
 

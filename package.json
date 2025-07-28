@@ -2,7 +2,7 @@
   "name": "hyper-mcp-terminal",
   "version": "1.2.0",
   "description": "Hello World!",
-  "main": "electron/main.cjs",
+  "main": "dist/electron/main.js",
   "type": "module",
   "author": "Jane Doe",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "restart": "pm2 stop terminal && npm start",
     "prepublishOnly": "npm run build",
     "electron": "electron .",
-    "electron:dev": "electron electron/dev.cjs",
+    "electron:dev": "electron dist/electron/main.js",
     "electron:build": "npm run build && npm run build:web && electron-builder",
     "electron:pack": "electron-builder --dir"
   },
@@ -83,8 +83,8 @@
     },
     "files": [
       "build/**/*",
-      "electron/**/*",
-      "lib/**/*",
+      "dist/electron/**/*",
+      "dist/src/**/*",
       "node_modules/**/*"
     ],
     "mac": {
