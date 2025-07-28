@@ -1,10 +1,13 @@
-import React, { useState, useEffect, Component, ErrorInfo } from "react";
+import React, { useState, useEffect, Component, ErrorInfo, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ConfigProvider,
   Spin,
   Alert,
+  Tabs,
+  Button,
 } from "antd";
+import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
 // 由于 antd 组件的默认文案是英文，所以需要修改为中文
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
@@ -22,10 +25,6 @@ dayjs.locale("zh-cn");
 // Electron 环境检测和 socket 连接配置
 const isElectron = !!(window as any).electronAPI;
 const socketUrl = isElectron ? 'http://localhost:3000' : document.location.origin;
-
-const socket = io(socketUrl, {
-  path: "/bash/",
-});
 // 错误边界组件
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -77,11 +76,122 @@ class ErrorBoundary extends Component<
   }
 }
 
+// 终端会话接口
+interface TerminalSession {
+  id: string;
+  title: string;
+  terminal: Terminal;
+  socket: any;
+  fitAddon: FitAddon;
+  connected: boolean;
+  loading: boolean;
+  error: string | null;
+}
+
 const App = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
+  const [sessions, setSessions] = useState<TerminalSession[]>([]);
+  const [activeTabKey, setActiveTabKey] = useState<string>('');
   const [appInfo, setAppInfo] = useState<{name?: string, version?: string}>({});
+  const sessionIdCounter = useRef(0);
+
+  // 创建新的终端会话
+  const createNewSession = useCallback(() => {
+    const sessionId = `terminal-${++sessionIdCounter.current}`;
+    const title = `终端 ${sessionIdCounter.current}`;
+    
+    const socket = io(socketUrl, {
+      path: "/bash/",
+      query: { sessionId }
+    });
+
+    const terminal = new Terminal({
+      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+      fontSize: 14,
+      cursorBlink: true,
+      allowTransparency: false,
+      theme: {
+        background: '#000000'
+      }
+    });
+    
+    const fitAddon = new FitAddon();
+    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(new WebLinksAddon());
+
+    const session: TerminalSession = {
+      id: sessionId,
+      title,
+      terminal,
+      socket,
+      fitAddon,
+      connected: false,
+      loading: true,
+      error: null
+    };
+
+    // 设置终端事件监听
+    terminal.onData((data) => {
+      socket.emit("shell", data);
+    });
+
+    // 设置Socket事件监听
+    socket.on("connect", () => {
+      console.log(`Session ${sessionId} connected`);
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? { ...s, connected: true, loading: false, error: null } : s
+      ));
+    });
+
+    socket.on("shell", (data) => {
+      terminal.write(data);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`Session ${sessionId} disconnected`);
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? { ...s, connected: false, error: '连接已断开' } : s
+      ));
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error(`Session ${sessionId} connection error:`, error);
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId ? { ...s, error: '无法连接到服务器', loading: false } : s
+      ));
+    });
+
+    setSessions(prev => [...prev, session]);
+    setActiveTabKey(sessionId);
+    
+    return sessionId;
+  }, []);
+
+  // 关闭终端会话
+  const closeSession = useCallback((sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      session.socket.disconnect();
+      session.terminal.dispose();
+      
+      setSessions(prev => {
+        const newSessions = prev.filter(s => s.id !== sessionId);
+        // 如果关闭的是当前活跃标签，切换到其他标签
+        if (activeTabKey === sessionId && newSessions.length > 0) {
+          setActiveTabKey(newSessions[newSessions.length - 1].id);
+        } else if (newSessions.length === 0) {
+          setActiveTabKey('');
+        }
+        return newSessions;
+      });
+    }
+  }, [sessions, activeTabKey]);
+
+  // 初始化第一个终端会话
+  useEffect(() => {
+    if (sessions.length === 0) {
+      createNewSession();
+    }
+  }, [createNewSession, sessions.length]);
 
   // Electron 应用信息获取
   useEffect(() => {
@@ -98,146 +208,115 @@ const App = () => {
     }
   }, []);
 
-  useEffect(function () {
-    try {
-      let dom = document.getElementById("terminal");
-      if (!dom) {
-        setError("终端容器元素未找到");
-        setLoading(false);
-        return;
-      }
-
-      var term = new Terminal({
-        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-        fontSize: 14,
-        cursorBlink: true,
-        allowTransparency: false,
-        theme: {
-          background: '#000000'
-        }
-      });
-      
-      const fitAddon = new FitAddon();
-      term.loadAddon(fitAddon);
-      term.loadAddon(new WebLinksAddon());
-      term.open(dom);
-      
-      // 延迟调用 fit() 确保 DOM 完全渲染
-      setTimeout(() => {
-        fitAddon.fit();
-      }, 100);
-      
-      window.onresize = () => {
-        fitAddon.fit();
-      };
-
-      term.onData(function (data) {
-        // 直接发送数据，socket.io 会处理连接状态
-        socket.emit("shell", data);
-      });
-
-      // 添加调试信息
-      console.log("设置 socket 监听器");
-
-      socket.on("connect", function () {
-        console.log("Socket.IO 连接成功");
-        setConnected(true);
-        setLoading(false);
-        setError(null);
-        // 连接成功后再次调用 fit() 确保尺寸正确
+  // 终端尺寸调整
+  useEffect(() => {
+    const handleResize = () => {
+      const activeSession = sessions.find(s => s.id === activeTabKey);
+      if (activeSession) {
         setTimeout(() => {
-          fitAddon.fit();
-        }, 200);
-      });
+          activeSession.fitAddon.fit();
+        }, 100);
+      }
+    };
 
-      socket.on("shell", (data) => {
-        term.write(data);
-      });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [sessions, activeTabKey]);
 
-      socket.on("disconnect", function () {
-        console.log("Socket.IO 连接断开");
-        setConnected(false);
-        setError("连接已断开");
-      });
-
-      socket.on("connect_error", function (error) {
-        console.error("Socket.IO 连接错误:", error);
-        setError("无法连接到服务器");
-        setLoading(false);
-      });
-
-      return () => {
-        socket.off("connect");
-        socket.off("shell");
-        socket.off("disconnect");
-        socket.off("connect_error");
-        term.dispose();
-      };
-    } catch (err) {
-      console.error("初始化终端失败:", err);
-      setError("初始化终端失败");
-      setLoading(false);
+  // 渲染终端到DOM
+  useEffect(() => {
+    const activeSession = sessions.find(s => s.id === activeTabKey);
+    if (activeSession) {
+      const terminalElement = document.getElementById(`terminal-${activeTabKey}`);
+      if (terminalElement && !terminalElement.hasChildNodes()) {
+        activeSession.terminal.open(terminalElement);
+        setTimeout(() => {
+          activeSession.fitAddon.fit();
+        }, 100);
+      }
     }
-  }, []);
+  }, [sessions, activeTabKey]);
+
+  // 获取当前活跃会话
+  const activeSession = sessions.find(s => s.id === activeTabKey);
   return (
     <ConfigProvider locale={zhCN}>
       <div className="terminal-container flex flex-col h-screen">
-        {loading && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-            <Spin size="large" tip="正在连接终端..." />
-          </div>
-        )}
-        
-        {error && (
-          <Alert
-            message="终端连接错误"
-            description={error}
-            type="error"
-            showIcon
-            className="absolute top-2.5 left-2.5 right-2.5 z-50"
-            action={
-              <button 
-                onClick={() => window.location.reload()}
-                className="bg-red-500 hover:bg-red-600 text-white border-none px-2 py-1 rounded cursor-pointer"
-              >
-                刷新页面
-              </button>
+        {/* 标签页头部 */}
+        <Tabs
+          type="editable-card"
+          activeKey={activeTabKey}
+          onChange={setActiveTabKey}
+          onEdit={(targetKey, action) => {
+            if (action === 'add') {
+              createNewSession();
+            } else if (action === 'remove' && typeof targetKey === 'string') {
+              closeSession(targetKey);
             }
-          />
-        )}
-        
-        {!connected && !loading && !error && (
-          <Alert
-            message="连接状态"
-            description="终端连接已断开，请检查网络连接"
-            type="warning"
-            showIcon
-            className="absolute top-2.5 left-2.5 right-2.5 z-50"
-          />
-        )}
-        
-        <div 
-          id="terminal" 
-          className="terminal-wrapper flex-1"
-        ></div>
-        
-        {/* Electron 状态栏 */}
-        {isElectron && (
-          <div className="flex justify-between items-center px-2 py-1 bg-gray-800 text-gray-300 text-xs border-t border-gray-600">
-            <div className="flex items-center space-x-4">
-              <span className={`flex items-center ${connected ? 'text-green-400' : 'text-red-400'}`}>
-                <span className={`w-2 h-2 rounded-full mr-1 ${connected ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                {connected ? '已连接' : '未连接'}
+          }}
+          items={sessions.map(session => ({
+            key: session.id,
+            label: (
+              <span className="flex items-center gap-1">
+                {session.title}
+                {session.loading && <Spin size="small" />}
+                {!session.connected && !session.loading && (
+                  <span className="w-2 h-2 bg-red-500 rounded-full" title="连接断开" />
+                )}
+                {session.connected && (
+                  <span className="w-2 h-2 bg-green-500 rounded-full" title="已连接" />
+                )}
               </span>
-              <span>WebSocket: {socketUrl}</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              {appInfo.name && <span>{appInfo.name}</span>}
-              {appInfo.version && <span>v{appInfo.version}</span>}
-              <span>Electron</span>
-            </div>
-          </div>
-        )}
+            ),
+            children: (
+              <div className="terminal-tab-content flex-1 relative">
+                {/* 状态提示 */}
+                {session.loading && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+                    <Spin size="large" tip="正在连接终端..." />
+                  </div>
+                )}
+                
+                {session.error && (
+                  <Alert
+                    message="终端连接错误"
+                    description={session.error}
+                    type="error"
+                    showIcon
+                    className="absolute top-2.5 left-2.5 right-2.5 z-50"
+                    action={
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="bg-red-500 hover:bg-red-600 text-white border-none px-2 py-1 rounded cursor-pointer"
+                      >
+                        刷新页面
+                      </button>
+                    }
+                  />
+                )}
+                
+                {!session.connected && !session.loading && !session.error && (
+                  <Alert
+                    message="连接状态"
+                    description="终端连接已断开，请检查网络连接"
+                    type="warning"
+                    showIcon
+                    className="absolute top-2.5 left-2.5 right-2.5 z-50"
+                  />
+                )}
+                
+                {/* 终端容器 */}
+                <div 
+                  id={`terminal-${session.id}`}
+                  className="terminal-wrapper h-full w-full"
+                  style={{ height: 'calc(100vh - 46px)' }}
+                />
+              </div>
+            )
+          }))}
+          className="h-full"
+          tabBarStyle={{ margin: 0, backgroundColor: '#f5f5f5' }}
+        />
       </div>
     </ConfigProvider>
   );

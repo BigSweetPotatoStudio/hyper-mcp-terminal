@@ -15,7 +15,53 @@ html, body {
   left: 0;
 }
 
-/* .terminal .xterm-viewport {
-  overflow: hidden;
-} */
+/* 多标签页终端样式 */
+.terminal-container {
+  height: 100vh;
+  width: 100vw;
+}
+
+.ant-tabs {
+  height: 100%;
+}
+
+.ant-tabs-content-holder {
+  height: calc(100% - 46px);
+}
+
+.ant-tabs-tabpane {
+  height: 100%;
+  padding: 0 !important;
+}
+
+.terminal-tab-content {
+  height: 100%;
+  position: relative;
+}
+
+.terminal-wrapper {
+  height: 100%;
+  width: 100%;
+}
+
+/* xterm 终端样式调整 */
+.xterm {
+  height: 100% !important;
+}
+
+.xterm-viewport {
+  overflow: hidden !important;
+}
+
+/* 标签页头部样式 */
+.ant-tabs-tab {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ant-tabs-tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
 

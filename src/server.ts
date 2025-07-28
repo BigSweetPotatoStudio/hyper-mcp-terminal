@@ -47,12 +47,22 @@ log4js.configure({
 console.log(`Log file will be created at: ${logFilePath}`);
 const logger = log4js.getLogger();
 
-io.on("connect", (socket) => {
-  console.log("connected");
+// 存储socket到会话的映射
+const socketSessionMap = new Map<string, number>();
 
-  // 创建新的终端会话
-  const terminalID = createTerminalSession(socket.id);
+io.on("connect", (socket) => {
+  console.log("Socket connected:", socket.id);
+  
+  // 获取会话ID（从查询参数中）
+  const sessionId = socket.handshake.query.sessionId as string || socket.id;
+  console.log("Session ID:", sessionId);
+  
+  // 创建新的终端会话（函数返回number类型的ID）
+  const terminalID = createTerminalSession();
   const context = globalTerminalMap.get(terminalID);
+  
+  // 记录socket和会话的映射关系
+  socketSessionMap.set(socket.id, terminalID);
 
   if (context) {
     context.terminal.onData((data: string) => {
@@ -66,9 +76,16 @@ io.on("connect", (socket) => {
     });
 
     socket.on("disconnect", function () {
-      console.log("user disconnected");
-      context.terminal.kill();
-      globalTerminalMap.delete(terminalID);
+      console.log("Socket disconnected:", socket.id);
+      const terminalID = socketSessionMap.get(socket.id);
+      if (terminalID) {
+        const context = globalTerminalMap.get(terminalID);
+        if (context) {
+          context.terminal.kill();
+          globalTerminalMap.delete(terminalID);
+        }
+        socketSessionMap.delete(socket.id);
+      }
     });
   }
 });

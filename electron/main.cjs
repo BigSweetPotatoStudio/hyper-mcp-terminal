@@ -89,6 +89,15 @@ function createWindow() {
 
 // 应用准备就绪时创建窗口
 app.whenReady().then(() => {
+  // 设置 IPC 处理程序
+  ipcMain.handle('app-version', () => {
+    return app.getVersion();
+  });
+
+  ipcMain.handle('app-name', () => {
+    return app.getName();
+  });
+
   if (!isDev) {
     // 生产模式下启动服务器
     startServer();
@@ -124,8 +133,8 @@ app.on('before-quit', () => {
   }
 });
 
-// 安全：防止新窗口创建
-app.on('web-contents-created', (event, contents) => {
+// 安全：防止新窗口创建  
+app.on('web-contents-created', (_event, contents) => {
   contents.on('new-window', (event, navigationUrl) => {
     // 阻止创建新窗口
     event.preventDefault();
@@ -133,11 +142,3 @@ app.on('web-contents-created', (event, contents) => {
   });
 });
 
-// IPC 处理程序
-ipcMain.handle('app-version', () => {
-  return app.getVersion();
-});
-
-ipcMain.handle('app-name', () => {
-  return app.getName();
-});

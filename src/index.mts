@@ -31,7 +31,6 @@ export type Context = {
   stdout: string;
   commandOutput: string;
   lastIndex: number;
-  timer: NodeJS.Timeout;
 };
 
 // 使用全局终端映射
@@ -41,7 +40,6 @@ let lastTerminalID = globalLastTerminalID;
 // const promptPattern = /\$\s*$|\>\s*$|#\s*$/m;
 const checkCount = parseInt(process.env.Terminal_End_CheckCount || '15');
 const maxToken = parseInt(process.env.Terminal_Output_MaxToken || '10000');
-const timeout = parseInt(process.env.Terminal_Timeout || '300000');
 const arr: string[] = [];
 function checkEnd(str: string): boolean {
   if (arr.length < checkCount) {
@@ -58,7 +56,7 @@ function checkEnd(str: string): boolean {
 }
 
 // 创建终端会话的函数，供 Web 界面调用
-export function createTerminalSession(socketId?: string): number {
+export function createTerminalSession(): number {
   const terminalID = ++globalLastTerminalID;
   lastTerminalID = globalLastTerminalID;
   
@@ -74,11 +72,7 @@ export function createTerminalSession(socketId?: string): number {
     terminal,
     stdout: "",
     commandOutput: "",
-    lastIndex: 0,
-    timer: setTimeout(() => {
-      terminal.kill();
-      globalTerminalMap.delete(terminalID);
-    }, timeout)
+    lastIndex: 0
   };
 
   terminal.onData((data) => {
@@ -113,11 +107,6 @@ server.tool(
 
     c.commandOutput = "";
     c.terminal.write(`${command}\r`);
-    clearTimeout(c.timer);
-    c.timer = setTimeout(() => {
-      c!.terminal.kill();
-      terminalMap.delete(c!.terminal.pid);
-    }, timeout);
 
     while (1) {
       await new Promise((resolve) => setTimeout(resolve, 100));

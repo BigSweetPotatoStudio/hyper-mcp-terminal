@@ -16,8 +16,6 @@ env:
     Terminal_End_CheckCount || 15;
     //(可选) 终端输出最大长度给大模型的
     Terminal_Output_MaxToken || 10000 
-    //(可选) 终端 5分钟 没输入挂掉
-    Terminal_Timeout || 5 * 60 * 1000 
 ```
 
 ### 失败解决办法

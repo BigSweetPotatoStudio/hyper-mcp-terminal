@@ -73,7 +73,6 @@ npm restart
 
 - `Terminal_End_CheckCount`: 终端结束检测次数（默认 15）
 - `Terminal_Output_MaxToken`: 终端输出最大长度（默认 10000）
-- `Terminal_Timeout`: 终端超时时间（默认 5 分钟）
 
 ### 端口配置
 
