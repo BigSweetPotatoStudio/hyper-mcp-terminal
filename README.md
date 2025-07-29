@@ -1,6 +1,6 @@
 # Hyper MCP Terminal
 
-一个基于 MCP (Model Context Protocol) 的 Electron 桌面终端应用，为 AI 助手提供安全的终端执行能力。
+一个基于 MCP (Model Context Protocol) 的 Electron 桌面终端应用，为 AI 助手提供安全的终端执行能力。让AI可以帮你运行远程机器的shell。
 
 使用http协议
 ```
@@ -17,6 +17,8 @@
       ]
     }
 ```
+
+<img width="1549" height="875" alt="image" src="https://github.com/user-attachments/assets/bc946181-2b78-424d-86f9-e1a67bfc30a5" />
 <img width="1774" height="1289" alt="395ab63caa6f840b536029016a82083" src="https://github.com/user-attachments/assets/71d10904-8397-46bf-9ff3-885c4f237e9b" />
 <img width="1276" height="897" alt="098e7e54cb2f65ed297fc7b8f4dee67" src="https://github.com/user-attachments/assets/f1d1fae5-6d78-43ea-b8aa-e95f41361950" />
 
