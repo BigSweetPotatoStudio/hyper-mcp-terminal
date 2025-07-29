@@ -1,6 +1,6 @@
 {
   "name": "hyper-mcp-terminal",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Hello World!",
   "main": "dist/electron/main.js",
   "type": "module",
@@ -17,7 +17,7 @@
     "build": "npx tsc",
     "build:web": "npx webpack --mode production",
     "dev:web": "npx webpack -w",
-    "dev:electron": "npm run build && cross-env electron .",
+    "dev:electron": "npm run build && cross-env NODE_ENV=development electron .",
     "electron:build": "npm run build && npm run build:web && electron-builder",
     "electron:pack": "electron-builder --dir",
     "rebuild": "electron-rebuild"
