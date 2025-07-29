@@ -6,8 +6,11 @@ import {
   Alert,
   Tabs,
   Button,
+  message,
+  Dropdown,
+  Menu,
 } from "antd";
-import { PlusOutlined, CloseOutlined } from '@ant-design/icons';
+import { PlusOutlined, CloseOutlined, CopyOutlined, SnippetsOutlined } from '@ant-design/icons';
 // 由于 antd 组件的默认文案是英文，所以需要修改为中文
 import zhCN from "antd/locale/zh_CN";
 import dayjs from "dayjs";
@@ -17,6 +20,7 @@ import "./index.css";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { ClipboardAddon } from "@xterm/addon-clipboard";
 
 import { io } from "socket.io-client";
 
@@ -92,7 +96,59 @@ const App = () => {
   const [sessions, setSessions] = useState<TerminalSession[]>([]);
   const [activeTabKey, setActiveTabKey] = useState<string>('');
   const [appInfo, setAppInfo] = useState<{name?: string, version?: string}>({});
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const sessionIdCounter = useRef(0);
+
+  // 复制选中文本到剪贴板
+  const handleCopy = useCallback(() => {
+    const activeSession = sessions.find(s => s.id === activeTabKey);
+    if (activeSession && activeSession.terminal) {
+      const selection = activeSession.terminal.getSelection();
+      if (selection) {
+        navigator.clipboard.writeText(selection).then(() => {
+          message.success('已复制到剪贴板');
+        }).catch(err => {
+          message.error(`复制失败: ${err}`);
+        });
+      } else {
+        message.warning('没有选中任何文本');
+      }
+    }
+    setContextMenuVisible(false);
+  }, [sessions, activeTabKey]);
+
+  // 从剪贴板粘贴文本
+  const handlePaste = useCallback(() => {
+    const activeSession = sessions.find(s => s.id === activeTabKey);
+    if (activeSession && activeSession.socket) {
+      navigator.clipboard.readText().then((text) => {
+        activeSession.socket.emit("shell", text);
+        message.success('已粘贴文本');
+      }).catch(err => {
+        message.error(`粘贴失败: ${err}`);
+      });
+    }
+    setContextMenuVisible(false);
+  }, [sessions, activeTabKey]);
+
+  // 处理键盘快捷键
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'c' || e.key === 'C') {
+        // Ctrl+C 复制（仅当有选中文本时）
+        const activeSession = sessions.find(s => s.id === activeTabKey);
+        if (activeSession && activeSession.terminal && activeSession.terminal.hasSelection()) {
+          e.preventDefault();
+          handleCopy();
+        }
+      } else if (e.key === 'v' || e.key === 'V') {
+        // Ctrl+V 粘贴
+        e.preventDefault();
+        handlePaste();
+      }
+    }
+  }, [sessions, activeTabKey, handleCopy, handlePaste]);
 
   // 创建新的终端会话
   const createNewSession = useCallback(() => {
@@ -115,8 +171,10 @@ const App = () => {
     });
     
     const fitAddon = new FitAddon();
+    const clipboardAddon = new ClipboardAddon();
     terminal.loadAddon(fitAddon);
     terminal.loadAddon(new WebLinksAddon());
+    terminal.loadAddon(clipboardAddon);
 
     const session: TerminalSession = {
       id: sessionId,
@@ -233,6 +291,19 @@ const App = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [sessions, activeTabKey]);
 
+  // 添加键盘事件监听
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  // 点击页面其他地方隐藏右键菜单
+  useEffect(() => {
+    const handleClick = () => setContextMenuVisible(false);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
   // 渲染终端到DOM
   useEffect(() => {
     const activeSession = sessions.find(s => s.id === activeTabKey);
@@ -249,6 +320,23 @@ const App = () => {
 
   // 获取当前活跃会话
   const activeSession = sessions.find(s => s.id === activeTabKey);
+
+  // 右键菜单项
+  const contextMenuItems = [
+    {
+      key: 'copy',
+      icon: <CopyOutlined />,
+      label: '复制',
+      onClick: handleCopy,
+      disabled: !activeSession?.terminal?.hasSelection()
+    },
+    {
+      key: 'paste',
+      icon: <SnippetsOutlined />,
+      label: '粘贴',
+      onClick: handlePaste
+    }
+  ];
   return (
     <ConfigProvider locale={zhCN}>
       <div className="terminal-container flex flex-col h-screen">
@@ -327,6 +415,11 @@ const App = () => {
                   id={`terminal-${session.id}`}
                   className="terminal-wrapper h-full w-full"
                   style={{ height: 'calc(100vh - 46px)' }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+                    setContextMenuVisible(true);
+                  }}
                 />
               </div>
             )
@@ -334,6 +427,36 @@ const App = () => {
           className="h-full"
           tabBarStyle={{ margin: 0, backgroundColor: '#f5f5f5' }}
         />
+        
+        {/* 右键菜单 */}
+        {contextMenuVisible && (
+          <div
+            className="fixed bg-gray-400  border border-gray-300 rounded shadow-lg z-50 py-1"
+            style={{
+              left: contextMenuPosition.x,
+              top: contextMenuPosition.y,
+              minWidth: '120px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contextMenuItems.map((item) => (
+              <div
+                key={item.key}
+                className={`px-3 py-2 flex items-center gap-2 cursor-pointer hover:text-green-500 ${
+                  item.disabled ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                onClick={() => {
+                  if (!item.disabled) {
+                    item.onClick();
+                  }
+                }}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </ConfigProvider>
   );
