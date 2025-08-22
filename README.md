@@ -225,6 +225,9 @@ npx electron-rebuild
 
 ![MCP 集成](https://github.com/user-attachments/assets/0fcfab81-b5e8-49bb-b990-eee5dcda1b29)
 
+<img width="1633" height="982" alt="c9230250-8c39-4fc3-bd0c-362b041ca0c0" src="https://github.com/user-attachments/assets/5edf61cd-6879-493d-9471-5383cede15fb" />
+
+
 ## 演示视频
 
 [YouTube 演示](https://www.youtube.com/watch?v=fVeUWu2Cvk0)
